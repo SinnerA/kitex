@@ -16,8 +16,6 @@
 
 package descriptor
 
-import "github.com/cloudwego/kitex/pkg/klog"
-
 // Annotation idl annotation interface
 type Annotation interface {
 	// Equal assert the given key/value is this Annotation
@@ -49,7 +47,7 @@ func init() {
 	RegisterAnnotation(APIPutAnnotation)
 	RegisterAnnotation(APIDeleteAnnotation)
 	// FieldMapping
-	RegisterAnnotation(GoTagAnnatition)
+	RegisterAnnotation(GoTagAnnotation)
 	// ValueMapping
 	RegisterAnnotation(APIJSConvAnnotation)
 	// none annotation
@@ -71,7 +69,7 @@ func FindAnnotation(key, value string) (interface{}, bool) {
 		}
 	}
 	// not in registered list
-	klog.Warnf("annotation: [key: %s, value: %s] is not supported", key, value)
+	logAnnotationNotSupport(key, value)
 	return nil, false
 }
 

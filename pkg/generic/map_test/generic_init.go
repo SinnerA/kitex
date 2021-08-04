@@ -39,7 +39,8 @@ var reqMsg = map[string]interface{}{
 	"Msg": "hello",
 	"InnerBase": map[string]interface{}{
 		"Base": map[string]interface{}{
-			"LogID": "log_id_inner",
+			//"LogID": "log_id_inner",
+			"LogID": 123,
 		},
 	},
 	"Base": map[string]interface{}{

@@ -18,8 +18,11 @@ package descriptor
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+
+	"github.com/cloudwego/kitex/pkg/klog"
 )
 
 func convertToString(val interface{}) string {
@@ -65,4 +68,12 @@ func convertToInt32(val interface{}) int32 {
 		return int32(i)
 	}
 	return 0
+}
+
+func logAnnotationNotSupport(key, val string) {
+	allowLog := !(os.Getenv("KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED") == "True")
+	if allowLog {
+		// not in registered list
+		klog.Warnf("annotation: [key: %s, value: %s] is not supported", key, val)
+	}
 }

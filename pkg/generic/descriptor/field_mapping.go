@@ -17,6 +17,7 @@
 package descriptor
 
 import (
+	"os"
 	"reflect"
 	"strings"
 )
@@ -29,8 +30,8 @@ type FiledMapping interface {
 // NewFieldMapping FiledMapping creator
 type NewFieldMapping func(value string) FiledMapping
 
-// GoTagAnnatition go.tag annatation define
-var GoTagAnnatition = NewBAMAnnotation("go.tag", NewGoTag)
+// GoTagAnnotation go.tag annotation define
+var GoTagAnnotation = NewBAMAnnotation("go.tag", NewGoTag)
 
 // go.tag = 'json:"xx"'
 type goTag struct {
@@ -43,10 +44,17 @@ var NewGoTag NewFieldMapping = func(value string) FiledMapping {
 }
 
 func (m *goTag) Handle(field *FieldDescriptor) {
+	if isGoTagAliasDisabled() {
+		return
+	}
 	tag := m.tag.Get("json")
 	if idx := strings.Index(tag, ","); idx != -1 {
 		field.Alias = tag[:idx]
 	} else {
 		field.Alias = tag
 	}
+}
+
+func isGoTagAliasDisabled() bool {
+	return os.Getenv("KITEX_GENERIC_GOTAG_ALIAS_DISABLED") == "True"
 }
