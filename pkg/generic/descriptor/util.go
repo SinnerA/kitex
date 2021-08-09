@@ -71,6 +71,7 @@ func convertToInt32(val interface{}) int32 {
 }
 
 func logAnnotationNotSupport(key, val string) {
+	fmt.Println("Env: KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED=" + os.Getenv("KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED"))
 	allowLog := !(os.Getenv("KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED") == "True")
 	if allowLog {
 		// not in registered list
