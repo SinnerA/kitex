@@ -74,6 +74,6 @@ func logAnnotationNotSupport(key, val string) {
 	allowLog := !(os.Getenv("KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED") == "True")
 	if allowLog {
 		// not in registered list
-		klog.Warnf("annotation: [key: %s, value: %s] is not supported, switch: %s", key, val, os.Getenv("KITEX_GENERIC_ANNOTATION_NOT_SUPPORT_LOG_DISABLED"))
+		klog.Warnf("annotation: [key: %s, value: %s] is not supported", key, val)
 	}
 }
