@@ -45,6 +45,7 @@ var NewGoTag NewFieldMapping = func(value string) FiledMapping {
 
 func (m *goTag) Handle(field *FieldDescriptor) {
 	if isGoTagAliasDisabled() {
+		field.Alias = field.FieldName()
 		return
 	}
 	tag := m.tag.Get("json")

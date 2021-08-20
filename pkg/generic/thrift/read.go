@@ -37,6 +37,10 @@ type readerOption struct {
 
 type reader func(ctx context.Context, in thrift.TProtocol, t *descriptor.TypeDescriptor, opt *readerOption) (interface{}, error)
 
+var (
+	readFields = map[int32]struct{}{}
+)
+
 func nextReader(tt descriptor.Type, t *descriptor.TypeDescriptor) (reader, error) {
 	if err := assertType(tt, t.Type); err != nil {
 		return nil, err
@@ -254,7 +258,7 @@ func readStruct(ctx context.Context, in thrift.TProtocol, t *descriptor.TypeDesc
 	if err != nil {
 		return nil, err
 	}
-	readFields := map[int32]struct{}{}
+	//readFields := map[int32]struct{}{}
 	for {
 		_, fieldType, fieldID, err := in.ReadFieldBegin()
 		if err != nil {
