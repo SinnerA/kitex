@@ -101,7 +101,7 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 			for _, shdlr := range t.opt.StreamingMetaHandlers {
 				ctx, err = shdlr.OnReadStream(ctx)
 				if err != nil {
-					tr.WriteStatus(s, convertFromKitexToGrpc(err))
+					_ = tr.WriteStatus(s, convertFromKitexToGrpc(err))
 					return
 				}
 			}

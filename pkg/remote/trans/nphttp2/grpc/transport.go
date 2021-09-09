@@ -62,6 +62,28 @@ func (p *bufferPool) put(b *bytes.Buffer) {
 	p.pool.Put(b)
 }
 
+type mdataPool struct {
+	pool sync.Pool
+}
+
+func newMdataPool() *mdataPool {
+	return &mdataPool{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return make(map[string][]string)
+			},
+		},
+	}
+}
+
+func (p *mdataPool) get() map[string][]string {
+	return p.pool.Get().(map[string][]string)
+}
+
+func (p *mdataPool) put(mdata map[string][]string) {
+	p.pool.Put(mdata)
+}
+
 // recvMsg represents the received msg from the transport. All transport
 // protocol specific info has been removed.
 type recvMsg struct {

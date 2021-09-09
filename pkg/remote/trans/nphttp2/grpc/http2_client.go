@@ -25,6 +25,7 @@ import (
 	"io"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -100,6 +101,7 @@ type http2Client struct {
 	onClose   func()
 
 	bufferPool *bufferPool
+	mdataPool  *mdataPool
 }
 
 // newHTTP2Client constructs a connected ClientTransport to addr based on HTTP2
@@ -140,12 +142,13 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, onGoAway func(
 		keepaliveEnabled:      keepaliveEnabled,
 		initialWindowSize:     initialWindowSize,
 		nextID:                1,
-		maxConcurrentStreams:  defaultMaxStreamsClient,
-		streamQuota:           defaultMaxStreamsClient,
+		maxConcurrentStreams:  uint32(getMaxStreamsClient()),
+		streamQuota:           int64(getMaxStreamsClient()),
 		streamsQuotaAvailable: make(chan struct{}, 1),
 		onGoAway:              onGoAway,
 		onClose:               onClose,
 		bufferPool:            newBufferPool(),
+		mdataPool:             newMdataPool(),
 	}
 	t.controlBuf = newControlBuffer(t.ctx.Done())
 	// t.bdpEst = &bdpEstimator{
@@ -197,6 +200,17 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, onGoAway func(
 		close(t.writerDone)
 	}()
 	return t, nil
+}
+
+func getMaxStreamsClient() int {
+	if val := os.Getenv("MAX_STREAMS_CLIENT"); val != "" {
+		maxStream, err := strconv.Atoi(val)
+		if err != nil {
+			return defaultMaxStreamsClient
+		}
+		return maxStream
+	}
+	return defaultMaxStreamsClient
 }
 
 func (t *http2Client) newStream(ctx context.Context, callHdr *CallHdr) *Stream {
@@ -417,7 +431,7 @@ func (t *http2Client) CloseStream(s *Stream, err error) {
 	t.closeStream(s, err, rst, rstCode, status.Convert(err), nil, false)
 }
 
-func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.ErrCode, st *status.Status, mdata map[string][]string, eosReceived bool) {
+func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.ErrCode, st *status.Status, headerData *parsedHeaderData, eosReceived bool) {
 	// Set stream status to done.
 	if s.swapState(streamDone) == streamDone {
 		// If it was already done, return.  If multiple closeStream calls
@@ -429,8 +443,11 @@ func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.
 	// only read it after it sees an io.EOF error from read or write and we'll write those errors
 	// only after updating this.
 	s.status = st
-	if len(mdata) > 0 {
-		s.trailer = mdata
+	if len(headerData.mdata) > 0 {
+		s.trailer = headerData.mdata
+
+		// free mdata
+		t.mdataPool.put(headerData.mdata)
 	}
 	if err != nil {
 		// This will unblock reads eventually.
@@ -836,7 +853,11 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 		return
 	}
 
-	state := &decodeState{}
+	state := &decodeState{
+		data: parsedHeaderData{
+			mdataPool: t.mdataPool,
+		},
+	}
 	// Initialize isGRPC value to be !initialHeader, since if a gRPC Response-Headers has already been received, then it means that the peer is speaking gRPC and we are in gRPC mode.
 	state.data.isGRPC = !initialHeader
 	if err := state.decodeHeader(frame); err != nil {
@@ -868,7 +889,7 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 
 	// if client received END_STREAM from server while stream was still active, send RST_STREAM
 	rst := s.getState() == streamActive
-	t.closeStream(s, io.EOF, rst, http2.ErrCodeNo, state.status(), state.data.mdata, true)
+	t.closeStream(s, io.EOF, rst, http2.ErrCodeNo, state.status(), &state.data, true)
 }
 
 // reader runs as a separate goroutine in charge of reading data from network

@@ -110,6 +110,7 @@ type http2Server struct {
 	idle time.Time
 
 	bufferPool *bufferPool
+	mdataPool  *mdataPool
 }
 
 // newHTTP2Server constructs a ServerTransport based on HTTP2. ConnectionError is
@@ -159,6 +160,7 @@ func newHTTP2Server(ctx context.Context, conn netpoll.Connection) (_ ServerTrans
 		idle:              time.Now(),
 		initialWindowSize: defaultWindowSize,
 		bufferPool:        newBufferPool(),
+		mdataPool:         newMdataPool(),
 	}
 	t.controlBuf = newControlBuffer(t.done)
 	// t.bdpEst = &bdpEstimator{
@@ -215,6 +217,9 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	streamID := frame.Header().StreamID
 	state := &decodeState{
 		serverSide: true,
+		data: parsedHeaderData{
+			mdataPool: t.mdataPool,
+		},
 	}
 	if err := state.decodeHeader(frame); err != nil {
 		if se, ok := status.FromError(err); ok {
@@ -250,6 +255,9 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	// Attach the received metadata to the context.
 	if len(state.data.mdata) > 0 {
 		s.ctx = metadata.NewIncomingContext(s.ctx, state.data.mdata)
+
+		// free metadata
+		t.mdataPool.put(state.data.mdata)
 	}
 
 	t.mu.Lock()

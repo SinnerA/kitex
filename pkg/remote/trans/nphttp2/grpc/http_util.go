@@ -122,6 +122,7 @@ type parsedHeaderData struct {
 	method     string
 	// key-value metadata map from the peer.
 	mdata          map[string][]string
+	mdataPool      *mdataPool
 	statsTags      []byte
 	statsTrace     []byte
 	contentSubtype string
@@ -338,7 +339,7 @@ func (d *decodeState) constructHTTPErrMsg() string {
 
 func (d *decodeState) addMetadata(k, v string) {
 	if d.data.mdata == nil {
-		d.data.mdata = make(map[string][]string)
+		d.data.mdata = d.data.mdataPool.get()
 	}
 	d.data.mdata[k] = append(d.data.mdata[k], v)
 }
