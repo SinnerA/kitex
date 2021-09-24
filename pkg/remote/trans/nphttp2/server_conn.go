@@ -19,12 +19,25 @@ package nphttp2
 import (
 	"io"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/grpc"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
 )
+
+type serverTransport struct {
+	tr          grpc.ServerTransport
+	rpcInfoPool *sync.Pool
+}
+
+func newServerTransport(tr grpc.ServerTransport, rpcInfoPool *sync.Pool) *serverTransport {
+	return &serverTransport{
+		tr:          tr,
+		rpcInfoPool: rpcInfoPool,
+	}
+}
 
 type serverConn struct {
 	tr grpc.ServerTransport

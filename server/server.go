@@ -222,7 +222,7 @@ func (s *server) invokeHandleEndpoint() endpoint.Endpoint {
 		ri := rpcinfo.GetRPCInfo(ctx)
 		methodName := ri.Invocation().MethodName()
 		if methodName == "" && s.svcInfo.ServiceName != serviceinfo.GenericService {
-			return errors.New("method name is empty in rpcinfo, should not happen")
+			return errors.New("method name is empty in rpcinfo, should not happen, stack: " + string(debug.Stack()))
 		}
 		defer func() {
 			if handlerErr := recover(); handlerErr != nil {

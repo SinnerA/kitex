@@ -22,6 +22,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"math"
 	"net"
@@ -940,6 +941,7 @@ func (t *http2Client) reader() {
 				}
 				continue
 			} else {
+				fmt.Println("transport err: " + err.Error())
 				// Transport error.
 				t.Close()
 				return

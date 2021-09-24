@@ -162,16 +162,16 @@ func (p *connPool) Discard(conn net.Conn) error {
 // Clean implements the LongConnPool interface.
 func (p *connPool) Clean(network, address string) {
 	if v, ok := p.conns.Load(address); ok {
-		p.conns.Delete(address)
 		v.(*transports).close()
+		p.conns.Delete(address)
 	}
 }
 
 // Close is to release resource of ConnPool, it is executed when client is closed.
 func (p *connPool) Close() error {
 	p.conns.Range(func(addr, trans interface{}) bool {
-		p.conns.Delete(addr)
 		trans.(*transports).close()
+		p.conns.Delete(addr)
 		return true
 	})
 	return nil
