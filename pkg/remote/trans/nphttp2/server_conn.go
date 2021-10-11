@@ -44,9 +44,9 @@ type serverConn struct {
 	s  *grpc.Stream
 }
 
-var _ net.Conn = (*serverConn)(nil)
+var _ net.Conn = &serverConn{}
 
-func newServerConn(tr grpc.ServerTransport, s *grpc.Stream) *serverConn {
+func newServerConn(tr grpc.ServerTransport, s *grpc.Stream) net.Conn {
 	return &serverConn{
 		tr: tr,
 		s:  s,

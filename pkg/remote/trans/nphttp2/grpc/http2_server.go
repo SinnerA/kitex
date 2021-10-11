@@ -233,11 +233,10 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 		return false
 	}
 
-	buf := newRecvBuffer()
 	s := &Stream{
 		id:             streamID,
 		st:             t,
-		buf:            buf,
+		buf:            newRecvBuffer(),
 		fc:             &inFlow{limit: uint32(t.initialWindowSize)},
 		recvCompress:   state.data.encoding,
 		method:         state.data.method,
@@ -320,10 +319,14 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 // typically run in a separate goroutine.
 // traceCtx attaches trace to ctx and returns the new context.
 func (t *http2Server) HandleStreams(handle func(*Stream), traceCtx func(context.Context, string) context.Context) {
+	var (
+		frame http2.Frame
+		err   error
+	)
 	defer close(t.readerDone)
 	for {
 		t.controlBuf.throttle()
-		frame, err := t.framer.ReadFrame()
+		frame, err = t.framer.ReadFrame()
 		atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
 		if err != nil {
 			if se, ok := err.(http2.StreamError); ok {

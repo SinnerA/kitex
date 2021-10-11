@@ -63,6 +63,7 @@ func (h *cliTransHandler) Write(ctx context.Context, conn net.Conn, msg remote.M
 func (h *cliTransHandler) Read(ctx context.Context, conn net.Conn, msg remote.Message) (err error) {
 	buf := newBuffer(conn)
 	defer buf.Release(err)
+
 	err = h.codec.Decode(ctx, msg, buf)
 	return
 }
