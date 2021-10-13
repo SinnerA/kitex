@@ -35,7 +35,7 @@ type NocopyWrite interface {
 }
 
 // ByteBuffer is the core abstraction of buffer in Kitex.
-type ByteBuffer interface {
+type  ByteBuffer interface {
 	io.ReadWriter
 
 	// Next reads the next n bytes sequentially and returns the original buffer.

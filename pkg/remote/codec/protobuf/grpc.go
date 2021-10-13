@@ -19,7 +19,6 @@ package protobuf
 import (
 	"context"
 	"encoding/binary"
-
 	"google.golang.org/protobuf/proto"
 
 	"github.com/cloudwego/kitex/pkg/remote"
