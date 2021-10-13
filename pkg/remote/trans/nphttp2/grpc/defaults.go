@@ -29,7 +29,8 @@ import (
 
 const (
 	// The default value of flow control window size in HTTP2 spec.
-	defaultWindowSize = 65535
+	//defaultWindowSize = 65535
+	defaultWindowSize = 1073741824
 	// The initial window size for flow control.
 	initialWindowSize = defaultWindowSize // for an RPC
 	// Infinity means unset duration
