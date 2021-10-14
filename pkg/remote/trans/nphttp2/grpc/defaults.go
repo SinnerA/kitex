@@ -35,7 +35,7 @@ const (
 	initialWindowSize = defaultWindowSize // for an RPC
 	// Infinity means unset duration
 	Infinity                     = time.Duration(math.MaxInt64)
-	defaultMaxStreamsClient      = 100
+	defaultMaxStreamsClient      = 1000
 	defaultMaxConnectionIdle     = Infinity
 	defaultMaxConnectionAge      = Infinity
 	defaultMaxConnectionAgeGrace = Infinity
