@@ -29,59 +29,48 @@ import (
 
 	"github.com/cloudwego/netpoll-http2"
 	"github.com/cloudwego/netpoll-http2/hpack"
+	"gopkg.in/eapache/queue.v1"
 )
 
 var updateHeaderTblSize = func(e *hpack.Encoder, v uint32) {
 	e.SetMaxDynamicTableSizeLimit(v)
 }
 
-type itemNode struct {
-	it   interface{}
-	next *itemNode
-}
-
-type itemList struct {
-	head *itemNode
-	tail *itemNode
-}
-
-func (il *itemList) enqueue(i interface{}) {
-	n := &itemNode{it: i}
-	if il.tail == nil {
-		il.head, il.tail = n, n
-		return
-	}
-	il.tail.next = n
-	il.tail = n
-}
-
-// peek returns the first item in the list without removing it from the
-// list.
-func (il *itemList) peek() interface{} {
-	return il.head.it
-}
-
-func (il *itemList) dequeue() interface{} {
-	if il.head == nil {
-		return nil
-	}
-	i := il.head.it
-	il.head = il.head.next
-	if il.head == nil {
-		il.tail = nil
-	}
-	return i
-}
-
-func (il *itemList) dequeueAll() *itemNode {
-	h := il.head
-	il.head, il.tail = nil, nil
-	return h
-}
-
-func (il *itemList) isEmpty() bool {
-	return il.head == nil
-}
+//type itemList struct {
+//	q *queue.Queue
+//}
+//
+//func newItemList() *queue.Queue {
+//	return &itemList{
+//		q: queue.New(),
+//	}
+//}
+//
+//func (il *itemList) enqueue(i interface{}) {
+//	il.q.Add(i)
+//}
+//
+//// peek returns the first item in the list without removing it from the
+//// list.
+//func (il *itemList) peek() interface{} {
+//	return il.q.Peek()
+//}
+//
+//func (il *itemList) dequeue() interface{} {
+//	return il.q.Remove()
+//}
+//
+//func (il *itemList) dequeueAll() []interface{} {
+//	items := make([]interface{}, 0, il.q.Length())
+//	for il.q.Length() > 0 {
+//		items = append(items, il.q.Remove())
+//	}
+//	return items
+//}
+//
+//func (il *itemList) isEmpty() bool {
+//	return il.q.Length() == 0
+//}
 
 // The following defines various control items which could flow through
 // the control buffer of transport. They represent different aspects of
@@ -207,7 +196,7 @@ const (
 type outStream struct {
 	id               uint32
 	state            outStreamState
-	itl              *itemList
+	itl              *queue.Queue
 	bytesOutStanding int
 	wq               *writeQuota
 
@@ -276,7 +265,7 @@ type controlBuffer struct {
 	done            <-chan struct{}
 	mu              sync.Mutex
 	consumerWaiting bool
-	list            *itemList
+	list            *queue.Queue
 	err             error
 
 	// transportResponseFrames counts the number of queued items that represent
@@ -291,7 +280,7 @@ type controlBuffer struct {
 func newControlBuffer(done <-chan struct{}) *controlBuffer {
 	return &controlBuffer{
 		ch:   make(chan struct{}, 1),
-		list: &itemList{},
+		list: queue.New(),
 		done: done,
 	}
 }
@@ -330,7 +319,7 @@ func (c *controlBuffer) executeAndPut(f func(it interface{}) bool, it cbItem) (b
 		wakeUp = true
 		c.consumerWaiting = false
 	}
-	c.list.enqueue(it)
+	c.list.Add(it)
 	if it.isTransportResponseFrame() {
 		c.transportResponseFrames++
 		if c.transportResponseFrames == maxQueuedTransportResponseFrames {
@@ -372,8 +361,8 @@ func (c *controlBuffer) get(block bool) (interface{}, error) {
 			c.mu.Unlock()
 			return nil, c.err
 		}
-		if !c.list.isEmpty() {
-			h := c.list.dequeue().(cbItem)
+		if c.list.Length() > 0 {
+			h := c.list.Remove().(cbItem)
 			if h.isTransportResponseFrame() {
 				if c.transportResponseFrames == maxQueuedTransportResponseFrames {
 					// We are removing the frame that put us over the
@@ -412,8 +401,12 @@ func (c *controlBuffer) finish() {
 	// There may be headers for streams in the control buffer.
 	// These streams need to be cleaned out since the transport
 	// is still not aware of these yet.
-	for head := c.list.dequeueAll(); head != nil; head = head.next {
-		hdr, ok := head.it.(*headerFrame)
+	items := make([]interface{}, 0, c.list.Length())
+	for c.list.Length() > 0 {
+		items = append(items, c.list.Remove())
+	}
+	for _, item := range items {
+		hdr, ok := item.(*headerFrame)
 		if !ok {
 			continue
 		}
@@ -594,7 +587,7 @@ func (l *loopyWriter) registerStreamHandler(h *registerStream) error {
 	str := &outStream{
 		id:    h.streamID,
 		state: empty,
-		itl:   &itemList{},
+		itl:   queue.New(),
 		wq:    h.wq,
 	}
 	l.estdStreams[h.streamID] = str
@@ -616,7 +609,7 @@ func (l *loopyWriter) headerHandler(h *headerFrame) error {
 
 		if str.state != empty { // either active or waiting on stream quota.
 			// add it str's list of items.
-			str.itl.enqueue(h)
+			str.itl.Add(h)
 			return nil
 		}
 		if err := l.writeHeader(h.streamID, h.endStream, h.hf, h.onWrite); err != nil {
@@ -628,15 +621,15 @@ func (l *loopyWriter) headerHandler(h *headerFrame) error {
 	str := &outStream{
 		id:    h.streamID,
 		state: empty,
-		itl:   &itemList{},
+		itl:   queue.New(),
 		wq:    h.wq,
 	}
-	str.itl.enqueue(h)
+	str.itl.Add(h)
 	return l.originateStream(str)
 }
 
 func (l *loopyWriter) originateStream(str *outStream) error {
-	hdr := str.itl.dequeue().(*headerFrame)
+	hdr := str.itl.Remove().(*headerFrame)
 	if err := hdr.initStream(str.id); err != nil {
 		if err == ErrConnClosing {
 			return err
@@ -702,7 +695,7 @@ func (l *loopyWriter) preprocessData(df *dataFrame) error {
 	}
 	// If we got data for a stream it means that
 	// stream was originated and the headers were sent out.
-	str.itl.enqueue(df)
+	str.itl.Add(df)
 	if str.state == empty {
 		str.state = active
 		l.activeStreams.enqueue(str)
@@ -828,7 +821,7 @@ func (l *loopyWriter) processData() (bool, error) {
 	if str == nil {
 		return true, nil
 	}
-	dataItem := str.itl.peek().(*dataFrame) // Peek at the first data item this stream.
+	dataItem := str.itl.Peek().(*dataFrame) // Peek at the first data item this stream.
 	// A data item is represented by a dataFrame, since it later translates into
 	// multiple HTTP2 data frames.
 	// Every dataFrame has two buffers; h that keeps grpc-message header and d that is acutal data.
@@ -840,10 +833,10 @@ func (l *loopyWriter) processData() (bool, error) {
 		if err := l.framer.WriteData(dataItem.streamID, dataItem.endStream, nil); err != nil {
 			return false, err
 		}
-		str.itl.dequeue() // remove the empty data item from stream
-		if str.itl.isEmpty() {
+		str.itl.Remove() // remove the empty data item from stream
+		if str.itl.Length() == 0 {
 			str.state = empty
-		} else if trailer, ok := str.itl.peek().(*headerFrame); ok { // the next item is trailers.
+		} else if trailer, ok := str.itl.Peek().(*headerFrame); ok { // the next item is trailers.
 			if err := l.writeHeader(trailer.streamID, trailer.endStream, trailer.hf, trailer.onWrite); err != nil {
 				return false, err
 			}
@@ -906,11 +899,11 @@ func (l *loopyWriter) processData() (bool, error) {
 	dataItem.d = dataItem.d[dSize:]
 
 	if len(dataItem.h) == 0 && len(dataItem.d) == 0 { // All the data from that message was written out.
-		str.itl.dequeue()
+		str.itl.Remove()
 	}
-	if str.itl.isEmpty() {
+	if str.itl.Length() == 0 {
 		str.state = empty
-	} else if trailer, ok := str.itl.peek().(*headerFrame); ok { // The next item is trailers.
+	} else if trailer, ok := str.itl.Peek().(*headerFrame); ok { // The next item is trailers.
 		if err := l.writeHeader(trailer.streamID, trailer.endStream, trailer.hf, trailer.onWrite); err != nil {
 			return false, err
 		}

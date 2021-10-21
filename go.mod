@@ -14,7 +14,8 @@ require (
 	golang.org/x/tools v0.1.0
 	google.golang.org/genproto v0.0.0-20210513213006-bf773b8c8384
 	google.golang.org/protobuf v1.26.0
+	gopkg.in/eapache/queue.v1 v1.1.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
-replace github.com/cloudwego/netpoll-http2 => github.com/sinnera/netpoll-http2 7be5d0049844751dd8ba124bc416b9dbd5b52c50
+replace github.com/cloudwego/netpoll-http2 => github.com/sinnera/netpoll-http2 v0.0.5-0.20211011090724-7be5d0049844
