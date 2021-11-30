@@ -18,12 +18,14 @@ package trans
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"runtime/debug"
 
 	stats2 "github.com/cloudwego/kitex/internal/stats"
 	"github.com/cloudwego/kitex/pkg/endpoint"
 	"github.com/cloudwego/kitex/pkg/kerrors"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/remote"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/pkg/serviceinfo"
@@ -95,24 +97,39 @@ func (t *svrTransHandler) Read(ctx context.Context, conn net.Conn, recvMsg remot
 func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 	ri := rpcinfo.GetRPCInfo(ctx)
 	t.ext.SetReadTimeout(ctx, conn, ri.Config(), remote.Server)
-	var err error
-	var closeConn bool
-	var recvMsg remote.Message
-	var sendMsg remote.Message
+
+	var (
+		err       error
+		closeConn bool
+		recvMsg   remote.Message
+		sendMsg   remote.Message
+	)
+
 	defer func() {
 		panicErr := recover()
+		stackInfo := string(debug.Stack())
+
 		if panicErr != nil {
 			closeConn = true
+			fmtLogger := t.opt.Logger
+			var errMsg string
+
 			if conn != nil {
-				ri := rpcinfo.GetRPCInfo(ctx)
-				rService, rAddr := getRemoteInfo(ri, conn)
-				t.opt.Logger.Errorf("KITEX: panic happened, close conn[%s], remoteService=%s, %v\n%s", rAddr, rService, panicErr, string(debug.Stack()))
+				rService, rAddr := getRemoteInfo(rpcinfo.GetRPCInfo(ctx), conn)
+				errMsg = fmt.Sprintf("KITEX: panic happened, close conn[%s], remoteService=%s, %v\n%s", rAddr, rService, panicErr, stackInfo)
 			} else {
-				t.opt.Logger.Errorf("KITEX: panic happened, %v\n%s", panicErr, string(debug.Stack()))
+				errMsg = fmt.Sprintf("KITEX: panic happened, %v\n%s", panicErr, stackInfo)
+			}
+
+			if ctxLogger, ok := fmtLogger.(klog.CtxLogger); ok {
+				ctxLogger.CtxErrorf(ctx, errMsg)
+			} else {
+				fmtLogger.Errorf(errMsg)
 			}
 		}
+
 		if closeConn && conn != nil {
-			conn.Close()
+			_ = conn.Close()
 		}
 		t.finishTracer(ctx, ri, err, panicErr)
 		remote.RecycleMessage(recvMsg)
