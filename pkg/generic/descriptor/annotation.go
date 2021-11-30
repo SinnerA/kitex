@@ -71,7 +71,7 @@ func FindAnnotation(key, value string) (interface{}, bool) {
 		}
 	}
 	// not in registered list
-	klog.Warnf("annotation: [key: %s, value: %s] is not supported", key, value)
+	logAnnotationNotSupport(key, value)
 	return nil, false
 }
 
