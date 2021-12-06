@@ -98,6 +98,7 @@ func (t *svrTransHandler) Read(ctx context.Context, conn net.Conn, recvMsg remot
 func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 	ri := rpcinfo.GetRPCInfo(ctx)
 	t.ext.SetReadTimeout(ctx, conn, ri.Config(), remote.Server)
+	ctx = context.WithValue(ctx, "K_LOGID", "jiangxuewu's logid")
 
 	var (
 		err       error
