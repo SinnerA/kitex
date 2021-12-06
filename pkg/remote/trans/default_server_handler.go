@@ -90,6 +90,7 @@ func (t *svrTransHandler) Read(ctx context.Context, conn net.Conn, recvMsg remot
 		recvMsg.Tags()[remote.ReadFailed] = true
 		return err
 	}
+	panic("Mock Read msg panic")
 	return nil
 }
 
