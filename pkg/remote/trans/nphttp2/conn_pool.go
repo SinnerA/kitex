@@ -18,6 +18,7 @@ package nphttp2
 
 import (
 	"context"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"net"
 	"runtime"
 	"sync"
@@ -146,6 +147,10 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 	})
 	if err != nil {
 		return nil, err
+	}
+	deadline, ok := ctx.Deadline()
+	if ok {
+		klog.Infof("KITEX: new grpc client conn, ctx: %#v", deadline.Sub(time.Now()).String())
 	}
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
 }
