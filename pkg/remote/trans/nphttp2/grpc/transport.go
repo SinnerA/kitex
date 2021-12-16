@@ -548,6 +548,11 @@ type CallHdr struct {
 	PreviousAttempts int // value of grpc-previous-rpc-attempts header to set
 }
 
+// GetConn.
+type GetConn interface {
+	GetRawConn() netpoll.Connection
+}
+
 // ClientTransport is the common interface for all gRPC client-side transport
 // implementations.
 type ClientTransport interface {

@@ -1045,3 +1045,7 @@ func (t *http2Client) GoAway() <-chan struct{} {
 
 func (t *http2Client) RemoteAddr() net.Addr { return t.remoteAddr }
 func (t *http2Client) LocalAddr() net.Addr  { return t.localAddr }
+
+func (t *http2Client) GetRawConn() netpoll.Connection {
+	return t.conn
+}

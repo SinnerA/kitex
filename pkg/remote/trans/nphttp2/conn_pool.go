@@ -24,6 +24,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/remote"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/grpc"
 	"github.com/cloudwego/netpoll"
@@ -71,12 +72,12 @@ func (t *transports) put(trans grpc.ClientTransport) {
 			t.cliTransports[i] = trans
 			return
 		}
+		if !t.cliTransports[i].(grpc.GetConn).GetRawConn().IsActive() {
+			t.cliTransports[i].GracefulClose()
+			t.cliTransports[i] = trans
+			return
+		}
 	}
-}
-
-func (t *transports) reset() {
-	curIdx := atomic.LoadInt32(&t.index)
-	t.cliTransports[curIdx%t.size] = nil
 }
 
 func (c *transports) close() {
@@ -119,14 +120,15 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 	if ok {
 		trans = v.(*transports)
 		if tr := trans.get(); tr != nil {
-			// Actually new a stream, reuse the connection (grpc.ClientTransport)
-			conn, err = newClientConn(ctx, tr, address)
-			if err != nil {
-				tr.GracefulClose()
-				trans.reset()
-				return nil, err
+			rawConn := tr.(grpc.GetConn).GetRawConn()
+			if rawConn.IsActive() {
+				// Actually new a stream, reuse the connection (grpc.ClientTransport)
+				conn, err = newClientConn(ctx, tr, address)
+				if err == nil {
+					return conn, nil
+				}
+				klog.CtxTracef(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
 			}
-			return conn, nil
 		}
 	}
 	tr, err, _ := p.sfg.Do(address, func() (i interface{}, e error) {
@@ -147,6 +149,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		return tr, nil
 	})
 	if err != nil {
+		klog.CtxTracef(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
 		return nil, err
 	}
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
