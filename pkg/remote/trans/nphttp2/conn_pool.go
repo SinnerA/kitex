@@ -127,7 +127,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 				if err == nil {
 					return conn, nil
 				}
-				klog.CtxTracef(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
+				klog.CtxInfof(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
 			}
 		}
 	}
@@ -149,7 +149,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		return tr, nil
 	})
 	if err != nil {
-		klog.CtxTracef(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
+		klog.CtxInfof(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
 		return nil, err
 	}
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
