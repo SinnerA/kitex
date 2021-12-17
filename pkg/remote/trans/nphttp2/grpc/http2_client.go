@@ -1044,7 +1044,7 @@ func (t *http2Client) GoAway() <-chan struct{} {
 func (t *http2Client) RemoteAddr() net.Addr { return t.remoteAddr }
 func (t *http2Client) LocalAddr() net.Addr  { return t.localAddr }
 
-// GetRawConn return the connection of http2Client.
-func (t *http2Client) GetRawConn() netpoll.Connection {
-	return t.conn
+// IsActive return the connection's active status.
+func (t *http2Client) IsActive() bool {
+	return t.conn.IsActive()
 }

@@ -547,9 +547,9 @@ type CallHdr struct {
 	PreviousAttempts int // value of grpc-previous-rpc-attempts header to set
 }
 
-// GetConn is the interface that exposing the underlying connection information.
-type GetConn interface {
-	GetRawConn() netpoll.Connection
+// IsActive is the interface that exposing the underlying connection's active status.
+type IsActive interface {
+	IsActive() bool
 }
 
 // ClientTransport is the common interface for all gRPC client-side transport

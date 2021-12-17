@@ -120,8 +120,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 	if ok {
 		trans = v.(*transports)
 		if tr := trans.get(); tr != nil {
-			rawConn := tr.(grpc.GetConn).GetRawConn()
-			if rawConn.IsActive() {
+			if tr.(grpc.IsActive).IsActive() {
 				// Actually new a stream, reuse the connection (grpc.ClientTransport)
 				conn, err = newClientConn(ctx, tr, address)
 				if err == nil {
@@ -144,7 +143,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 				cliTransports: make([]grpc.ClientTransport, p.size),
 			}
 		}
-		trans.put(tr) // the tr (connection) maybe not in the pool, but can be recycled.
+		trans.put(tr) // the tr (connection) maybe not in the pool, but can be recycled by keepalive.
 		p.conns.Store(address, trans)
 		return tr, nil
 	})
