@@ -794,7 +794,7 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 	active := len(t.activeStreams)
 	t.mu.Unlock()
 	if active == 0 {
-		klog.Infof("Client receive goaway frame, detail: %s, debug info: %s, reason: %+v", render.Render(f), string(f.DebugData()), t.GetGoAwayReason())
+		klog.Errorf("Client receive goaway frame, detail: %s, debug info: %s, reason: %+v", render.Render(f), string(f.DebugData()), t.GetGoAwayReason())
 		t.Close()
 	}
 }
