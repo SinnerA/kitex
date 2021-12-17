@@ -63,27 +63,30 @@ type transports struct {
 	cliTransports []grpc.ClientTransport
 }
 
+// get connection from the pool, load balance with round-robin.
 func (t *transports) get() grpc.ClientTransport {
 	idx := atomic.AddUint32(&t.index, 1)
 	return t.cliTransports[idx%t.size]
 }
 
+// put find the empty position to put the connection to the pool.
 func (t *transports) put(trans grpc.ClientTransport) {
 	for i := 0; i < int(t.size); i++ {
 		if t.cliTransports[i] == nil {
 			t.cliTransports[i] = trans
 		}
-		if !t.cliTransports[i].(grpc.GetConn).GetRawConn().IsActive() {
+		if !t.cliTransports[i].(grpc.IsActive).IsActive() {
 			t.cliTransports[i].GracefulClose()
 			t.cliTransports[i] = trans
 		}
 	}
 }
 
+// close all connections of the pool.
 func (c *transports) close() {
 	for i := range c.cliTransports {
-		if c.cliTransports[i] != nil {
-			c.cliTransports[i].GracefulClose()
+		if t := c.cliTransports[i]; t != nil {
+			t.GracefulClose()
 		}
 	}
 }
