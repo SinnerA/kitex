@@ -79,6 +79,11 @@ func (t *transports) put(trans grpc.ClientTransport) {
 			t.cliTransports[i].GracefulClose()
 			t.cliTransports[i] = trans
 		}
+		if !t.cliTransports[i].(grpc.IsActive).IsActive() {
+			t.cliTransports[i].GracefulClose()
+			t.cliTransports[i] = trans
+			return
+		}
 	}
 }
 
@@ -129,7 +134,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 				if err == nil {
 					return conn, nil
 				}
-				klog.CtxDebugf(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
+				klog.CtxInfof(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
 			}
 		}
 	}
@@ -151,7 +156,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		return tr, nil
 	})
 	if err != nil {
-		klog.CtxErrorf(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
+		klog.CtxInfof(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
 		return nil, err
 	}
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
