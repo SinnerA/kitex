@@ -18,6 +18,7 @@ package nphttp2
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"runtime"
 	"sync"
@@ -35,6 +36,7 @@ var _ remote.LongConnPool = &connPool{}
 
 func poolSize() int32 {
 	numP := runtime.GOMAXPROCS(0)
+	fmt.Println("CPU: ", int32(numP * 3 / 2))
 	return int32(numP * 3 / 2)
 }
 
