@@ -63,7 +63,7 @@ type transports struct {
 
 func (t *transports) get() grpc.ClientTransport {
 	idx := atomic.AddInt32(&t.index, 1)
-	klog.Warnf("KITEX: get client transport, idx: %d, size: %d", idx, t.size)
+	klog.Warnf("KITEX: get client transport, idx: %d, size: %d, choose: %+v", idx, t.size, t.cliTransports[idx%t.size].RemoteAddr(), t.cliTransports[idx%t.size])
 	return t.cliTransports[idx%t.size]
 }
 
@@ -153,6 +153,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		klog.CtxInfof(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
 		return nil, err
 	}
+	klog.CtxInfof(ctx, "KITEX: New grpc client connection succeed, network=%s, address=%s", network, address)
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
 }
 
