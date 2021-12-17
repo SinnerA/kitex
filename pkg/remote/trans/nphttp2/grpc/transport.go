@@ -36,7 +36,6 @@ import (
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
-
 	"github.com/cloudwego/netpoll"
 )
 
@@ -546,6 +545,11 @@ type CallHdr struct {
 	ContentSubtype string
 
 	PreviousAttempts int // value of grpc-previous-rpc-attempts header to set
+}
+
+// GetConn is the interface that exposing the underlying connection information.
+type GetConn interface {
+	GetRawConn() netpoll.Connection
 }
 
 // ClientTransport is the common interface for all gRPC client-side transport
