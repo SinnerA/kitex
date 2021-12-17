@@ -33,11 +33,11 @@ import (
 
 var _ remote.LongConnPool = &connPool{}
 
-func poolSize() uint32 {
+func poolSize() int32 {
 	// One connection per processor, and need redundancy。
 	// Benchmark indicates this setting is the best performance.
 	numP := runtime.GOMAXPROCS(0)
-	return uint32(numP * 3 / 2)
+	return int32(numP * 3 / 2)
 }
 
 // NewConnPool ...
@@ -50,7 +50,7 @@ func NewConnPool(remoteService string) *connPool {
 
 // MuxPool manages a pool of long connections.
 type connPool struct {
-	size  uint32
+	size  int32
 	sfg   singleflight.Group
 	conns sync.Map // key: address, value: *transports
 
@@ -58,14 +58,14 @@ type connPool struct {
 }
 
 type transports struct {
-	index         uint32
-	size          uint32
+	index         int32
+	size          int32
 	cliTransports []grpc.ClientTransport
 }
 
 // get connection from the pool, load balance with round-robin.
 func (t *transports) get() grpc.ClientTransport {
-	idx := atomic.AddUint32(&t.index, 1)
+	idx := atomic.AddInt32(&t.index, 1)
 	return t.cliTransports[idx%t.size]
 }
 
