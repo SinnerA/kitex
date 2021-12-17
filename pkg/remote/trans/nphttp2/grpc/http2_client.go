@@ -22,7 +22,6 @@ package grpc
 
 import (
 	"context"
-	"github.com/luci/go-render/render"
 	"io"
 	"math"
 	"net"
