@@ -63,7 +63,6 @@ type transports struct {
 
 func (t *transports) get() grpc.ClientTransport {
 	idx := atomic.AddInt32(&t.index, 1)
-	klog.Warnf("KITEX: get client transport, idx: %d, size: %d, choose: %+v", idx, t.size, t.cliTransports[idx%t.size].RemoteAddr(), t.cliTransports[idx%t.size])
 	return t.cliTransports[idx%t.size]
 }
 
