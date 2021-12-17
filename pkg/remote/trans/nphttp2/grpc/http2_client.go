@@ -22,6 +22,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/luci/go-render/render"
 	"io"
 	"math"
 	"net"
@@ -39,7 +40,6 @@ import (
 	"github.com/cloudwego/netpoll"
 	"github.com/cloudwego/netpoll-http2"
 	"github.com/cloudwego/netpoll-http2/hpack"
-	"github.com/luci/go-render/render"
 )
 
 // http2Client implements the ClientTransport interface with HTTP2.
@@ -794,7 +794,6 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 	active := len(t.activeStreams)
 	t.mu.Unlock()
 	if active == 0 {
-		klog.Errorf("Client receive goaway frame, detail: %s, debug info: %s, reason: %+v", render.Render(f), string(f.DebugData()), t.GetGoAwayReason())
 		t.Close()
 	}
 }
