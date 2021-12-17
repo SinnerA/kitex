@@ -36,11 +36,10 @@ import (
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
-
 	"github.com/cloudwego/netpoll"
-
 	"github.com/cloudwego/netpoll-http2"
 	"github.com/cloudwego/netpoll-http2/hpack"
+	"github.com/luci/go-render/render"
 )
 
 // http2Client implements the ClientTransport interface with HTTP2.
@@ -795,6 +794,7 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 	active := len(t.activeStreams)
 	t.mu.Unlock()
 	if active == 0 {
+		klog.Infof("Client receive goaway frame, detail: %s, debug info: %s, reason: %+v", render.Render(f), string(f.DebugData()), t.GetGoAwayReason())
 		t.Close()
 	}
 }
