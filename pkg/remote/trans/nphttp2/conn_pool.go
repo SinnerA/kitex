@@ -152,7 +152,6 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		klog.CtxInfof(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
 		return nil, err
 	}
-	klog.CtxInfof(ctx, "KITEX: New grpc client connection succeed, network=%s, address=%s", network, address)
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
 }
 
