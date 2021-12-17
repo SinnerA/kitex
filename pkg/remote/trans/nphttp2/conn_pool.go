@@ -18,6 +18,7 @@ package nphttp2
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"runtime"
 	"sync"
@@ -37,6 +38,7 @@ func poolSize() uint32 {
 	// One connection per processor, and need redundancy。
 	// Benchmark indicates this setting is the best performance.
 	numP := runtime.GOMAXPROCS(0)
+	fmt.Println("CPU: ", uint32(numP * 3 / 2))
 	return uint32(numP * 3 / 2)
 }
 
