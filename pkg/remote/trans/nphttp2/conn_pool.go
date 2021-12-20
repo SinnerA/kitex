@@ -72,12 +72,14 @@ func (t *transports) get() grpc.ClientTransport {
 // put find the empty position to put the connection to the pool.
 func (t *transports) put(trans grpc.ClientTransport) {
 	for i := 0; i < int(t.size); i++ {
-		if t.cliTransports[i] == nil {
+		if t.cliTransports[i] == nil {return
 			t.cliTransports[i] = trans
+			return
 		}
 		if !t.cliTransports[i].(grpc.IsActive).IsActive() {
 			t.cliTransports[i].GracefulClose()
 			t.cliTransports[i] = trans
+			return
 		}
 	}
 }
