@@ -66,7 +66,6 @@ type transports struct {
 // get connection from the pool, load balance with round-robin.
 func (t *transports) get() grpc.ClientTransport {
 	idx := atomic.AddInt32(&t.index, 1)
-	fmt.Printf("pool get idx: %d, size: %d, choose: %d\n", idx, t.size, idx%t.size)
 	return t.cliTransports[idx%t.size]
 }
 
@@ -149,13 +148,13 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		}
 		trans.put(tr) // the tr (connection) maybe not in the pool, but can be recycled by keepalive.
 		p.conns.Store(address, trans)
+		fmt.Printf("KITEX: New grpc client connection succeed, network=%s, address=%s\n", network, address)
 		return tr, nil
 	})
 	if err != nil {
 		fmt.Printf("KITEX: New grpc client connection failed, network=%s, address=%s, error=%s\n", network, address, err.Error())
 		return nil, err
 	}
-	fmt.Printf("KITEX: New grpc client connection succeed, network=%s, address=%s\n", network, address)
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
 }
 
