@@ -18,13 +18,13 @@ package nphttp2
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/remote"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/grpc"
 	"github.com/cloudwego/netpoll"
@@ -66,7 +66,7 @@ type transports struct {
 // get connection from the pool, load balance with round-robin.
 func (t *transports) get() grpc.ClientTransport {
 	idx := atomic.AddInt32(&t.index, 1)
-	klog.Infof("pool get idx: ", idx, ", size: ", t.size)
+	fmt.Printf("pool get idx: %d, size: %d, choose: %d\n", idx, t.size, idx%t.size)
 	return t.cliTransports[idx%t.size]
 }
 
@@ -130,7 +130,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 				if err == nil {
 					return conn, nil
 				}
-				klog.CtxInfof(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
+				fmt.Printf("KITEX: New grpc stream failed, network=%s, address=%s, error=%s\n", network, address, err.Error())
 			}
 		}
 	}
@@ -152,10 +152,10 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 		return tr, nil
 	})
 	if err != nil {
-		klog.CtxErrorf(ctx, "KITEX: New grpc client connection failed, network=%s, address=%s, error=%s", network, address, err.Error())
+		fmt.Printf("KITEX: New grpc client connection failed, network=%s, address=%s, error=%s\n", network, address, err.Error())
 		return nil, err
 	}
-	klog.CtxInfof(ctx, "KITEX: New grpc client connection succeed, network=%s, address=%s", network, address)
+	fmt.Printf("KITEX: New grpc client connection succeed, network=%s, address=%s\n", network, address)
 	return newClientConn(ctx, tr.(grpc.ClientTransport), address)
 }
 
