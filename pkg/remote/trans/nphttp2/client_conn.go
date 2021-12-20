@@ -19,6 +19,7 @@ package nphttp2
 import (
 	"context"
 	"fmt"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"io"
 	"net"
 	"time"
@@ -43,6 +44,8 @@ func newClientConn(ctx context.Context, tr grpc.ClientTransport, addr string) (*
 	} else {
 		svcName = fmt.Sprintf("%s.%s", ri.Invocation().PackageName(), ri.Invocation().ServiceName())
 	}
+	deadline, _ := ctx.Deadline()
+	klog.CtxInfof(ctx, "KITEX: newClientConn ctx leftTime: %s", deadline.Sub(time.Now()).String())
 	s, err := tr.NewStream(ctx, &grpc.CallHdr{
 		Host: ri.To().ServiceName(),
 		// grpc method format /package.Service/Method
