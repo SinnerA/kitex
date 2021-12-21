@@ -23,8 +23,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/cloudwego/kitex/pkg/klog"
-
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/grpc"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
@@ -45,9 +43,8 @@ func newClientConn(ctx context.Context, tr grpc.ClientTransport, addr string) (*
 	} else {
 		svcName = fmt.Sprintf("%s.%s", ri.Invocation().PackageName(), ri.Invocation().ServiceName())
 	}
-	deadline, _ := ctx.Deadline()
-	klog.CtxInfof(ctx, "KITEX: newClientConn ctx leftTime: %s", deadline.Sub(time.Now()).String())
-	s, err := tr.NewStream(ctx, &grpc.CallHdr{
+	// FIXME stream never timeout for debug
+	s, err := tr.NewStream(context.Background(), &grpc.CallHdr{
 		Host: ri.To().ServiceName(),
 		// grpc method format /package.Service/Method
 		Method: fmt.Sprintf("/%s/%s", svcName, ri.Invocation().MethodName()),
