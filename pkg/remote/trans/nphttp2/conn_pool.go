@@ -131,9 +131,10 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 				conn, err = newClientConn(ctx, tr, address)
 				if err == nil {
 					fd := conn.s.Conn.(interface{ Fd() int }).Fd()
-					klog.CtxInfof(ctx, "KITEX: New grpc stream succeed, fd: %d, steamId: %d, network=%s, address=%s, error=%s", fd, conn.s.Id, network, address, err.Error())
+					klog.CtxInfof(ctx, "KITEX: New grpc stream succeed, fd: %d, steamId: %d, network=%s, address=%s", fd, conn.s.Id, network, address)
 					return conn, nil
 				}
+				klog.CtxInfof(ctx, "KITEX: New grpc stream failed, network=%s, address=%s, error=%s", network, address, err.Error())
 			}
 		}
 	}
@@ -160,7 +161,7 @@ func (p *connPool) Get(ctx context.Context, network, address string, opt remote.
 	}
 	cliConn, err := newClientConn(ctx, tr.(grpc.ClientTransport), address)
 	fd := cliConn.s.Conn.(interface{ Fd() int }).Fd()
-	klog.CtxInfof(ctx, "KITEX: New grpc client connection succeed, fd: %d, steamId: %d, network=%s, address=%s", fd, cliConn.s.Id, network, address)
+	klog.CtxInfof(ctx, "KITEX: New grpc client connection succeed, fd: %d, steamId: %d, network=%s, address=%s, err: %v", fd, cliConn.s.Id, network, address, err)
 	return cliConn, err
 }
 
