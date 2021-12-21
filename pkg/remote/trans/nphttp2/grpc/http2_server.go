@@ -230,7 +230,7 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 
 	buf := newRecvBuffer()
 	s := &Stream{
-		id:             streamID,
+		Id:             streamID,
 		st:             t,
 		buf:            buf,
 		fc:             &inFlow{limit: uint32(t.initialWindowSize)},
@@ -271,8 +271,8 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	}
 	if streamID%2 != 1 || streamID <= t.maxStreamID {
 		t.mu.Unlock()
-		// illegal gRPC stream id.
-		klog.CtxErrorf(s.ctx, "transport: http2Server.HandleStreams received an illegal stream id: %v", streamID)
+		// illegal gRPC stream Id.
+		klog.CtxErrorf(s.ctx, "transport: http2Server.HandleStreams received an illegal stream Id: %v", streamID)
 		s.cancel()
 		return true
 	}
@@ -301,7 +301,7 @@ func (t *http2Server) operateHeaders(frame *http2.MetaHeadersFrame, handle func(
 	}
 	// Register the stream with loopy.
 	t.controlBuf.put(&registerStream{
-		streamID: s.id,
+		streamID: s.Id,
 		wq:       s.wq,
 	})
 	handle(s)
@@ -387,7 +387,7 @@ func (t *http2Server) getStream(f http2.Frame) (*Stream, bool) {
 // the window.
 func (t *http2Server) adjustWindow(s *Stream, n uint32) {
 	if w := s.fc.maybeAdjust(n); w > 0 {
-		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.id, increment: w})
+		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.Id, increment: w})
 	}
 }
 
@@ -397,7 +397,7 @@ func (t *http2Server) adjustWindow(s *Stream, n uint32) {
 func (t *http2Server) updateWindow(s *Stream, n uint32) {
 	if w := s.fc.onRead(n); w > 0 {
 		t.controlBuf.put(&outgoingWindowUpdate{
-			streamID:  s.id,
+			streamID:  s.Id,
 			increment: w,
 		})
 	}
@@ -446,7 +446,7 @@ func (t *http2Server) handleData(f *http2.DataFrame) {
 		}
 		if f.Header().Flags.Has(http2.FlagDataPadded) {
 			if w := s.fc.onRead(size - uint32(len(f.Data()))); w > 0 {
-				t.controlBuf.put(&outgoingWindowUpdate{s.id, w})
+				t.controlBuf.put(&outgoingWindowUpdate{s.Id, w})
 			}
 		}
 		// TODO(bradfitz, zhaoq): A copy is required here because there is no
@@ -634,7 +634,7 @@ func (t *http2Server) writeHeaderLocked(s *Stream) error {
 	}
 	headerFields = appendHeaderFieldsFromMD(headerFields, s.header)
 	success, err := t.controlBuf.executeAndPut(t.checkForHeaderListSize, &headerFrame{
-		streamID:  s.id,
+		streamID:  s.Id,
 		hf:        headerFields,
 		endStream: false,
 		onWrite:   t.setResetPingStrikes,
@@ -688,7 +688,7 @@ func (t *http2Server) WriteStatus(s *Stream, st *status.Status) error {
 	// Attach the trailer metadata.
 	headerFields = appendHeaderFieldsFromMD(headerFields, s.trailer)
 	trailingHeader := &headerFrame{
-		streamID:  s.id,
+		streamID:  s.Id,
 		hf:        headerFields,
 		endStream: true,
 		onWrite:   t.setResetPingStrikes,
@@ -729,7 +729,7 @@ func (t *http2Server) Write(s *Stream, hdr, data []byte, opts *Options) error {
 		}
 	}
 	df := &dataFrame{
-		streamID:    s.id,
+		streamID:    s.Id,
 		h:           hdr,
 		d:           data,
 		onEachWrite: t.setResetPingStrikes,
@@ -869,8 +869,8 @@ func (t *http2Server) deleteStream(s *Stream, eosReceived bool) {
 	s.cancel()
 
 	t.mu.Lock()
-	if _, ok := t.activeStreams[s.id]; ok {
-		delete(t.activeStreams, s.id)
+	if _, ok := t.activeStreams[s.Id]; ok {
+		delete(t.activeStreams, s.Id)
 		if len(t.activeStreams) == 0 {
 			t.idle = time.Now()
 		}
@@ -887,7 +887,7 @@ func (t *http2Server) finishStream(s *Stream, rst bool, rstCode http2.ErrCode, h
 	}
 
 	hdr.cleanup = &cleanupStream{
-		streamID: s.id,
+		streamID: s.Id,
 		rst:      rst,
 		rstCode:  rstCode,
 		onWrite: func() {
@@ -903,7 +903,7 @@ func (t *http2Server) closeStream(s *Stream, rst bool, rstCode http2.ErrCode, eo
 	t.deleteStream(s, eosReceived)
 
 	t.controlBuf.put(&cleanupStream{
-		streamID: s.id,
+		streamID: s.Id,
 		rst:      rst,
 		rstCode:  rstCode,
 		onWrite:  func() {},

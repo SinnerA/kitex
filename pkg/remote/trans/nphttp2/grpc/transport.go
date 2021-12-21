@@ -179,18 +179,18 @@ func (r *recvBufferReader) Read(p []byte) (n int, err error) {
 }
 
 func (r *recvBufferReader) read(p []byte) (n int, err error) {
-	fd := r.stream.conn.(interface{ Fd() int }).Fd()
+	fd := r.stream.Conn.(interface{ Fd() int }).Fd()
 	select {
 	case <-r.ctxDone:
 		return 0, ContextErr(r.ctx.Err())
 	case m := <-r.recv.get():
-		klog.Infof("KITEX: stream [read] get recv, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.id, time.Now().String())
+		klog.Infof("KITEX: stream [read] get recv, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.Id, time.Now().String())
 		return r.readAdditional(m, p)
 	}
 }
 
 func (r *recvBufferReader) readClient(p []byte) (n int, err error) {
-	fd := r.stream.conn.(interface{ Fd() int }).Fd()
+	fd := r.stream.Conn.(interface{ Fd() int }).Fd()
 	// If the context is canceled, then closes the stream with nil metadata.
 	// closeStream writes its error parameter to r.recv as a recvMsg.
 	// r.readAdditional acts on that message and returns the necessary error.
@@ -211,10 +211,10 @@ func (r *recvBufferReader) readClient(p []byte) (n int, err error) {
 		// faster.
 		r.closeStream(ContextErr(r.ctx.Err()))
 		m := <-r.recv.get()
-		klog.Infof("KITEX: stream [readClient] get recv ctx done, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.id, time.Now().String())
+		klog.Infof("KITEX: stream [readClient] get recv ctx done, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.Id, time.Now().String())
 		return r.readAdditional(m, p)
 	case m := <-r.recv.get():
-		klog.Infof("KITEX: stream [readClient] get recv, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.id, time.Now().String())
+		klog.Infof("KITEX: stream [readClient] get recv, fd: %d, streamID: %d, timestamp: %s", fd, r.stream.Id, time.Now().String())
 		return r.readAdditional(m, p)
 	}
 }
@@ -245,8 +245,8 @@ const (
 
 // Stream represents an RPC in the transport layer.
 type Stream struct {
-	id           uint32
-	conn         netpoll.Connection // FIXME for debug
+	Id           uint32
+	Conn         netpoll.Connection // FIXME for debug
 	st           ServerTransport    // nil for client side Stream
 	ct           *http2Client       // nil for server side Stream
 	ctx          context.Context    // the associated context of the stream
@@ -468,9 +468,9 @@ func (s *Stream) write(m recvMsg) {
 	_, file3, line3, _ := runtime.Caller(3)
 	_, file4, line4, _ := runtime.Caller(4)
 	_, file5, line5, _ := runtime.Caller(5)
-	fd := s.conn.(interface{ Fd() int }).Fd()
-	klog.Infof("KITEX: stream write, before exec put, conn[%d], streamID[%d], err[%v], caller-line [2][%s][%d], [3][%s][%d], 4[%s][%d], 5[%s][%d]\n",
-		fd, s.id, m.err, file2, line2, file3, line3, file4, line4, file5, line5)
+	fd := s.Conn.(interface{ Fd() int }).Fd()
+	klog.Infof("KITEX: stream write, before exec put, Conn[%d], streamID[%d], err[%v], caller-line [2][%s][%d], [3][%s][%d], 4[%s][%d], 5[%s][%d]\n",
+		fd, s.Id, m.err, file2, line2, file3, line3, file4, line4, file5, line5)
 
 	s.buf.put(m)
 }
@@ -527,7 +527,7 @@ const (
 	draining
 )
 
-// NewServerTransport creates a ServerTransport with conn or non-nil error
+// NewServerTransport creates a ServerTransport with Conn or non-nil error
 // if it fails.
 func NewServerTransport(ctx context.Context, conn netpoll.Connection) (ServerTransport, error) {
 	return newHTTP2Server(ctx, conn)

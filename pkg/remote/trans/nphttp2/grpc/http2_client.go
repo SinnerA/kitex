@@ -204,7 +204,7 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, remoteService 
 func (t *http2Client) newStream(ctx context.Context, callHdr *CallHdr) *Stream {
 	s := &Stream{
 		ctx:            ctx,
-		conn:           t.conn,
+		Conn:           t.conn,
 		ct:             t,
 		done:           make(chan struct{}),
 		method:         callHdr.Method,
@@ -349,7 +349,7 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 		h := it.(*headerFrame)
 		h.streamID = t.nextID
 		t.nextID += 2
-		s.id = h.streamID
+		s.Id = h.streamID
 		s.fc = &inFlow{limit: uint32(t.initialWindowSize)}
 		if t.streamQuota > 0 && t.waitingStreams > 0 {
 			select {
@@ -446,11 +446,11 @@ func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.
 		close(s.headerChan)
 	}
 	cleanup := &cleanupStream{
-		streamID: s.id,
+		streamID: s.Id,
 		onWrite: func() {
 			t.mu.Lock()
 			if t.activeStreams != nil {
-				delete(t.activeStreams, s.id)
+				delete(t.activeStreams, s.Id)
 			}
 			t.mu.Unlock()
 		},
@@ -544,7 +544,7 @@ func (t *http2Client) Write(s *Stream, hdr, data []byte, opts *Options) error {
 		return errStreamDone
 	}
 	df := &dataFrame{
-		streamID:  s.id,
+		streamID:  s.Id,
 		endStream: opts.Last,
 		h:         hdr,
 		d:         data,
@@ -569,7 +569,7 @@ func (t *http2Client) getStream(f http2.Frame) *Stream {
 // the window.
 func (t *http2Client) adjustWindow(s *Stream, n uint32) {
 	if w := s.fc.maybeAdjust(n); w > 0 {
-		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.id, increment: w})
+		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.Id, increment: w})
 	}
 }
 
@@ -578,7 +578,7 @@ func (t *http2Client) adjustWindow(s *Stream, n uint32) {
 // exceeds the corresponding threshold.
 func (t *http2Client) updateWindow(s *Stream, n uint32) {
 	if w := s.fc.onRead(n); w > 0 {
-		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.id, increment: w})
+		t.controlBuf.put(&outgoingWindowUpdate{streamID: s.Id, increment: w})
 	}
 }
 
@@ -628,7 +628,7 @@ func (t *http2Client) handleData(f *http2.DataFrame) {
 		}
 		if f.Header().Flags.Has(http2.FlagDataPadded) {
 			if w := s.fc.onRead(size - uint32(len(f.Data()))); w > 0 {
-				t.controlBuf.put(&outgoingWindowUpdate{s.id, w})
+				t.controlBuf.put(&outgoingWindowUpdate{s.Id, w})
 			}
 		}
 		// TODO(bradfitz, zhaoq): A copy is required here because there is no
