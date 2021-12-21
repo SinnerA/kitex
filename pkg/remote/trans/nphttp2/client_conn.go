@@ -19,10 +19,11 @@ package nphttp2
 import (
 	"context"
 	"fmt"
-	"github.com/cloudwego/kitex/pkg/klog"
 	"io"
 	"net"
 	"time"
+
+	"github.com/cloudwego/kitex/pkg/klog"
 
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/grpc"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"

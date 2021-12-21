@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/netpoll-http2"
@@ -516,9 +517,11 @@ func (l *loopyWriter) run(remoteAddr string) (err error) {
 		if err != nil {
 			return err
 		}
+		klog.Infof("KITEX: loopyWriter start handle cbItem, timestamp: %s", time.Now().String())
 		if err = l.handle(it); err != nil {
 			return err
 		}
+		klog.Infof("KITEX: loopyWriter start processData, timestamp: %s", time.Now().String())
 		if _, err = l.processData(); err != nil {
 			return err
 		}
@@ -530,14 +533,17 @@ func (l *loopyWriter) run(remoteAddr string) (err error) {
 				return err
 			}
 			if it != nil {
+				klog.Infof("KITEX: loopyWriter start handle cbItem in hasdata if get cbItem, timestamp: %s", time.Now().String())
 				if err = l.handle(it); err != nil {
 					return err
 				}
+				klog.Infof("KITEX: loopyWriter start processData in hasdata if get cbItem, timestamp: %s", time.Now().String())
 				if _, err = l.processData(); err != nil {
 					return err
 				}
 				continue hasdata
 			}
+			klog.Infof("KITEX: loopyWriter start processData in hasdata, timestamp: %s", time.Now().String())
 			isEmpty, err := l.processData()
 			if err != nil {
 				return err

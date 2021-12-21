@@ -32,6 +32,9 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
+	"time"
+
+	"github.com/cloudwego/kitex/pkg/klog"
 
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
@@ -103,6 +106,7 @@ func (b *recvBuffer) put(r recvMsg) {
 	if len(b.backlog) == 0 {
 		select {
 		case b.c <- r:
+			klog.Infof("KITEX: stream recvBuffer put recvMsg, timestamp: %s", time.Now().String())
 			b.mu.Unlock()
 			return
 		default:
@@ -117,6 +121,7 @@ func (b *recvBuffer) load() {
 	if len(b.backlog) > 0 {
 		select {
 		case b.c <- b.backlog[0]:
+			klog.Infof("KITEX: stream recvBuffer backlog put, timestamp: %s", time.Now().String())
 			b.backlog[0] = recvMsg{}
 			b.backlog = b.backlog[1:]
 		default:
@@ -174,6 +179,7 @@ func (r *recvBufferReader) read(p []byte) (n int, err error) {
 	case <-r.ctxDone:
 		return 0, ContextErr(r.ctx.Err())
 	case m := <-r.recv.get():
+		klog.Infof("KITEX: stream [read] get recv, timestamp: %s", time.Now().String())
 		return r.readAdditional(m, p)
 	}
 }
@@ -199,8 +205,10 @@ func (r *recvBufferReader) readClient(p []byte) (n int, err error) {
 		// faster.
 		r.closeStream(ContextErr(r.ctx.Err()))
 		m := <-r.recv.get()
+		klog.Infof("KITEX: stream [readClient] get recv ctx done, timestamp: %s", time.Now().String())
 		return r.readAdditional(m, p)
 	case m := <-r.recv.get():
+		klog.Infof("KITEX: stream [readClient] get recv, timestamp: %s", time.Now().String())
 		return r.readAdditional(m, p)
 	}
 }

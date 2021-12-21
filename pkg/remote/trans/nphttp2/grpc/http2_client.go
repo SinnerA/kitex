@@ -883,6 +883,7 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 // optimal.
 // TODO(zhaoq): Check the validity of the incoming frame sequence.
 func (t *http2Client) reader() {
+	klog.Infof("KITEX: reader start, timestamp: %s", time.Now().String())
 	defer close(t.readerDone)
 	// Check the validity of server preface.
 	frame, err := t.framer.ReadFrame()
@@ -904,9 +905,15 @@ func (t *http2Client) reader() {
 	// loop to keep reading incoming messages on this transport.
 	for {
 		t.controlBuf.throttle()
+		klog.Infof("KITEX: reader ReadFrame start, timestamp: %s", time.Now().String())
 		frame, err := t.framer.ReadFrame()
 		if t.keepaliveEnabled {
 			atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
+		}
+		if err != nil {
+			klog.Infof("KITEX: reader ReadFrame end, err: %s, timestamp: %s", err.Error(), time.Now().String())
+		} else {
+			klog.Infof("KITEX: reader ReadFrame end, timestamp: %s", time.Now().String())
 		}
 		if err != nil {
 			// Abort an active stream if the http2.Framer returns a
@@ -947,6 +954,7 @@ func (t *http2Client) reader() {
 		default:
 			klog.Warnf("transport: http2Client.reader got unhandled frame type %v.", frame)
 		}
+		klog.Infof("KITEX: reader handle one loop end, timestamp: %s", time.Now().String())
 	}
 }
 
@@ -983,6 +991,7 @@ func (t *http2Client) keepalive() {
 			}
 			if outstandingPing && timeoutLeft <= 0 {
 				t.Close()
+				klog.Infof("KITEX: close in keepalive, line: 994, timestamp: %s", time.Now().String())
 				return
 			}
 			t.mu.Lock()
@@ -1004,7 +1013,9 @@ func (t *http2Client) keepalive() {
 				// we awaken.
 				outstandingPing = false
 				t.kpDormant = true
+				klog.Infof("KITEX: start wait in keepalive, line: 1016, timestamp: %s", time.Now().String())
 				t.kpDormancyCond.Wait()
+				klog.Infof("KITEX: end wait in keepalive, line: 1018, timestamp: %s", time.Now().String())
 			}
 			t.kpDormant = false
 			t.mu.Unlock()

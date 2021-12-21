@@ -19,6 +19,9 @@ package nphttp2
 import (
 	"context"
 	"net"
+	"time"
+
+	"github.com/cloudwego/kitex/pkg/klog"
 
 	"github.com/cloudwego/kitex/pkg/remote"
 	"github.com/cloudwego/kitex/pkg/remote/codec/protobuf"
@@ -51,6 +54,14 @@ type cliTransHandler struct {
 }
 
 func (h *cliTransHandler) Write(ctx context.Context, conn net.Conn, msg remote.Message) (err error) {
+	now := time.Now()
+	deadline, _ := ctx.Deadline()
+	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write start, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	defer func() {
+		now := time.Now()
+		deadline, _ := ctx.Deadline()
+		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write end, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	}()
 	buf := newBuffer(conn)
 	defer buf.Release(err)
 
@@ -61,6 +72,14 @@ func (h *cliTransHandler) Write(ctx context.Context, conn net.Conn, msg remote.M
 }
 
 func (h *cliTransHandler) Read(ctx context.Context, conn net.Conn, msg remote.Message) (err error) {
+	now := time.Now()
+	deadline, _ := ctx.Deadline()
+	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read start, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	defer func() {
+		now := time.Now()
+		deadline, _ := ctx.Deadline()
+		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read end, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	}()
 	buf := newBuffer(conn)
 	defer buf.Release(err)
 	err = h.codec.Decode(ctx, msg, buf)
