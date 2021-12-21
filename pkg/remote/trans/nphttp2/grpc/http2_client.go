@@ -153,6 +153,7 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, remoteService 
 	// 	updateFlowControl: t.updateFlowControl,
 	// }
 	t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst)
+	t.loopy.conn = conn
 
 	if t.keepaliveEnabled {
 		t.kpDormancyCond = sync.NewCond(&t.mu)
@@ -203,6 +204,7 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, remoteService 
 func (t *http2Client) newStream(ctx context.Context, callHdr *CallHdr) *Stream {
 	s := &Stream{
 		ctx:            ctx,
+		conn:           t.conn,
 		ct:             t,
 		done:           make(chan struct{}),
 		method:         callHdr.Method,
@@ -217,6 +219,7 @@ func (t *http2Client) newStream(ctx context.Context, callHdr *CallHdr) *Stream {
 	}
 	s.trReader = &transportReader{
 		reader: &recvBufferReader{
+			stream:  s,
 			ctx:     s.ctx,
 			ctxDone: s.ctx.Done(),
 			recv:    s.buf,

@@ -28,6 +28,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cloudwego/netpoll"
+
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/netpoll-http2"
 	"github.com/cloudwego/netpoll-http2/hpack"
@@ -443,6 +445,7 @@ const (
 // processing a stream, loopy writes out data bytes from this stream capped by the min
 // of http2MaxFrameLen, connection-level flow control and stream-level flow control.
 type loopyWriter struct {
+	conn      netpoll.Connection
 	side      side
 	cbuf      *controlBuffer
 	sendQuota uint32
@@ -502,6 +505,7 @@ const minBatchSize = 1000
 // As an optimization, to increase the batch size for each flush, loopy yields the processor, once
 // if the batch size is too low to give stream goroutines a chance to fill it up.
 func (l *loopyWriter) run(remoteAddr string) (err error) {
+	fd := l.conn.(interface{ Fd() int }).Fd()
 	defer func() {
 		if err == ErrConnClosing {
 			// Don't log ErrConnClosing as error since it happens
@@ -517,11 +521,11 @@ func (l *loopyWriter) run(remoteAddr string) (err error) {
 		if err != nil {
 			return err
 		}
-		klog.Infof("KITEX: loopyWriter start handle cbItem, timestamp: %s", time.Now().String())
+		klog.Infof("KITEX: loopyWriter start handle cbItem, fd=%d, remoteAddr=%s, timestamp: %s", fd, remoteAddr, time.Now().String())
 		if err = l.handle(it); err != nil {
 			return err
 		}
-		klog.Infof("KITEX: loopyWriter start processData, timestamp: %s", time.Now().String())
+		klog.Infof("KITEX: loopyWriter start processData, fd=%d, remoteAddr=%s, timestamp: %s", fd, remoteAddr, time.Now().String())
 		if _, err = l.processData(); err != nil {
 			return err
 		}
@@ -533,17 +537,17 @@ func (l *loopyWriter) run(remoteAddr string) (err error) {
 				return err
 			}
 			if it != nil {
-				klog.Infof("KITEX: loopyWriter start handle cbItem in hasdata if get cbItem, timestamp: %s", time.Now().String())
+				klog.Infof("KITEX: loopyWriter start handle cbItem in hasdata if get cbItem, fd=%d, remoteAddr=%s, timestamp: %s", fd, remoteAddr, time.Now().String())
 				if err = l.handle(it); err != nil {
 					return err
 				}
-				klog.Infof("KITEX: loopyWriter start processData in hasdata if get cbItem, timestamp: %s", time.Now().String())
+				klog.Infof("KITEX: loopyWriter start processData in hasdata if get cbItem, fd=%d, remoteAddr=%s, timestamp: %s", fd, remoteAddr, time.Now().String())
 				if _, err = l.processData(); err != nil {
 					return err
 				}
 				continue hasdata
 			}
-			klog.Infof("KITEX: loopyWriter start processData in hasdata, timestamp: %s", time.Now().String())
+			klog.Infof("KITEX: loopyWriter start processData in hasdata, fd=%d, remoteAddr=%s, timestamp: %s", fd, remoteAddr, time.Now().String())
 			isEmpty, err := l.processData()
 			if err != nil {
 				return err
