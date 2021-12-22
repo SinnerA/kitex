@@ -547,12 +547,13 @@ func NewClientTransport(ctx context.Context, conn netpoll.Connection, remoteServ
 			readLen := conn.Reader().Len()
 			if h2Client.IsActive() {
 				h2Client.mu.Lock()
-				klog.CtxInfof(ctx, "KITEX: streaming transport fd: %d, read len: %d, activeStreams: %s",
-					readLen, fd, activeStreamsString(h2Client.activeStreams))
+				klog.CtxInfof(ctx, "KITEX: streaming transport fd: %d, read len: %d, activeStreamsLen: %d, activeStreams: %s",
+					fd, readLen, len(h2Client.activeStreams), activeStreamsString(h2Client.activeStreams))
 				h2Client.mu.Unlock()
 			} else {
-				klog.CtxInfof(ctx, "KITEX: streaming transport is not active, stop print log. fd: %d, read len: %d, activeStreams: %s",
-					readLen, fd, activeStreamsString(h2Client.activeStreams))
+				klog.CtxInfof(ctx, "KITEX: streaming transport is not active, stop print log. " +
+					"fd: %d, read len: %d, activeStreamsLen: %d, activeStreams: %s",
+					fd, readLen, len(h2Client.activeStreams), activeStreamsString(h2Client.activeStreams))
 				return
 			}
 		}
