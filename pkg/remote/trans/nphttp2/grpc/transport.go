@@ -31,6 +31,7 @@ import (
 	"io"
 	"net"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -537,17 +538,36 @@ func NewServerTransport(ctx context.Context, conn netpoll.Connection) (ServerTra
 // and returns it to the caller.
 func NewClientTransport(ctx context.Context, conn netpoll.Connection, remoteService string, onGoAway func(GoAwayReason), onClose func()) (ClientTransport, error) {
 	h2Client, err := newHTTP2Client(ctx, conn, remoteService, onGoAway, onClose)
+	fd := conn.(interface{ Fd() int }).Fd()
+	if fd == 0 {
+		klog.CtxWarnf(ctx, "KITEX: NewClientTransport fd == 0, conn: %s", render.Render(conn))
+	}
 	go func() {
-		c := conn.(netpoll.Connection)
-		fd := c.(interface{ Fd() int }).Fd()
 		for range time.Tick(2 * time.Second) {
-			readLen := c.Reader().Len()
-			h2Client.mu.Lock()
-			klog.CtxInfof(ctx, "KITEX: streaming transport fd: %d, read len: %d, activeStreams: %s", readLen, fd, render.Render(h2Client.activeStreams))
-			h2Client.mu.Unlock()
+			readLen := conn.Reader().Len()
+			if h2Client.IsActive() {
+				h2Client.mu.Lock()
+				klog.CtxInfof(ctx, "KITEX: streaming transport fd: %d, read len: %d, activeStreams: %s",
+					readLen, fd, activeStreamsString(h2Client.activeStreams))
+				h2Client.mu.Unlock()
+			} else {
+				klog.CtxInfof(ctx, "KITEX: streaming transport is not active, stop print log. fd: %d, read len: %d, activeStreams: %s",
+					readLen, fd, activeStreamsString(h2Client.activeStreams))
+				return
+			}
 		}
 	}()
 	return h2Client, err
+}
+
+func activeStreamsString(activeStreams map[uint32]*Stream) string {
+	ret := make([]string, 0, len(activeStreams))
+	for streamId, stream := range activeStreams {
+		fd := stream.Conn.(interface{ Fd() int }).Fd()
+		str := fmt.Sprintf("streamId: %d, streamFd: %d", streamId, fd)
+		ret = append(ret, str)
+	}
+	return strings.Join(ret, ", ")
 }
 
 // Options provides additional hints and information for message

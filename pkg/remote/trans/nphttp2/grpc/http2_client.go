@@ -321,6 +321,11 @@ func (t *http2Client) NewStream(ctx context.Context, callHdr *CallHdr) (_ *Strea
 				cleanup(err)
 				return err
 			}
+			streamFd := s.Conn.(interface{ Fd() int }).Fd()
+			transFd := t.conn.(interface{ Fd() int }).Fd()
+			if transFd != streamFd {
+				klog.CtxWarnf(ctx, "KITEX: transFd [%d] != streamFd [%d]", transFd, streamFd)
+			}
 			t.activeStreams[id] = s
 			// If the keepalive goroutine has gone dormant, wake it up.
 			if t.kpDormant {
