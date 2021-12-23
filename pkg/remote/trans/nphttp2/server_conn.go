@@ -62,3 +62,5 @@ func (c *serverConn) SetWriteDeadline(t time.Time) error { return nil }
 func (c *serverConn) Close() error {
 	return c.tr.WriteStatus(c.s, status.New(codes.OK, ""))
 }
+func (c *serverConn) Fd() int          { return c.s.Conn.(interface{ Fd() int }).Fd() }
+func (c *serverConn) StreamId() uint32 { return c.s.Id }

@@ -93,3 +93,5 @@ func (c *clientConn) Close() error {
 
 func (c *clientConn) Header() (metadata.MD, error) { return c.s.Header() }
 func (c *clientConn) Trailer() metadata.MD         { return c.s.Trailer() }
+func (c *clientConn) Fd() int                      { return c.s.Conn.(interface{ Fd() int }).Fd() }
+func (c *clientConn) StreamId() uint32             { return c.s.Id }

@@ -56,11 +56,13 @@ type cliTransHandler struct {
 func (h *cliTransHandler) Write(ctx context.Context, conn net.Conn, msg remote.Message) (err error) {
 	now := time.Now()
 	deadline, _ := ctx.Deadline()
-	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write start, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	fd := conn.(interface{ Fd() int }).Fd()
+	streamId := conn.(interface{ StreamId() uint32 }).StreamId()
+	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write start, fd: %d, streamId: %d, timestamp: %s, leftTime: %s", fd, streamId, now.String(), deadline.Sub(now).String())
 	defer func() {
 		now := time.Now()
 		deadline, _ := ctx.Deadline()
-		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write end, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Write end, fd: %d, streamId: %d, timestamp: %s, leftTime: %s", fd, streamId, now.String(), deadline.Sub(now).String())
 	}()
 	buf := newBuffer(conn)
 	defer buf.Release(err)
@@ -74,11 +76,13 @@ func (h *cliTransHandler) Write(ctx context.Context, conn net.Conn, msg remote.M
 func (h *cliTransHandler) Read(ctx context.Context, conn net.Conn, msg remote.Message) (err error) {
 	now := time.Now()
 	deadline, _ := ctx.Deadline()
-	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read start, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+	fd := conn.(interface{ Fd() int }).Fd()
+	streamId := conn.(interface{ StreamId() uint32 }).StreamId()
+	klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read start, fd: %d, streamId: %d, timestamp: %s, leftTime: %s", fd, streamId, now.String(), deadline.Sub(now).String())
 	defer func() {
 		now := time.Now()
 		deadline, _ := ctx.Deadline()
-		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read end, timestamp: %s, leftTime: %s", now.String(), deadline.Sub(now).String())
+		klog.CtxInfof(ctx, "KITEX: http2 cliTransHandler Read end, fd: %d, streamId: %d, timestamp: %s, leftTime: %s", fd, streamId, now.String(), deadline.Sub(now).String())
 	}()
 	buf := newBuffer(conn)
 	defer buf.Release(err)

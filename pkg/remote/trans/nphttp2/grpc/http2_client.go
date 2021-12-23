@@ -891,7 +891,8 @@ func (t *http2Client) operateHeaders(frame *http2.MetaHeadersFrame) {
 // optimal.
 // TODO(zhaoq): Check the validity of the incoming frame sequence.
 func (t *http2Client) reader() {
-	klog.Infof("KITEX: reader start, timestamp: %s", time.Now().String())
+	fd := t.conn.(interface{ Fd() int }).Fd()
+	klog.Infof("KITEX: reader start, fd: %d, timestamp: %s", fd, time.Now().String())
 	defer close(t.readerDone)
 	// Check the validity of server preface.
 	frame, err := t.framer.ReadFrame()
@@ -913,15 +914,15 @@ func (t *http2Client) reader() {
 	// loop to keep reading incoming messages on this transport.
 	for {
 		t.controlBuf.throttle()
-		klog.Infof("KITEX: reader ReadFrame start, timestamp: %s", time.Now().String())
+		klog.Infof("KITEX: reader ReadFrame start, fd: %d, timestamp: %s", fd, time.Now().String())
 		frame, err := t.framer.ReadFrame()
 		if t.keepaliveEnabled {
 			atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
 		}
 		if err != nil {
-			klog.Infof("KITEX: reader ReadFrame end, err: %s, timestamp: %s", err.Error(), time.Now().String())
+			klog.Infof("KITEX: reader ReadFrame end, fd: %d, err: %s, timestamp: %s", fd, err.Error(), time.Now().String())
 		} else {
-			klog.Infof("KITEX: reader ReadFrame end, timestamp: %s", time.Now().String())
+			klog.Infof("KITEX: reader ReadFrame end, fd: %d, timestamp: %s", fd, time.Now().String())
 		}
 		if err != nil {
 			// Abort an active stream if the http2.Framer returns a
@@ -962,7 +963,7 @@ func (t *http2Client) reader() {
 		default:
 			klog.Warnf("transport: http2Client.reader got unhandled frame type %v.", frame)
 		}
-		klog.Infof("KITEX: reader handle one loop end, timestamp: %s", time.Now().String())
+		klog.Infof("KITEX: reader handle one loop end, fd: %d, timestamp: %s", fd, time.Now().String())
 	}
 }
 
@@ -975,6 +976,7 @@ func minTime(a, b time.Duration) time.Duration {
 
 // keepalive running in a separate goroutune makes sure the connection is alive by sending pings.
 func (t *http2Client) keepalive() {
+	fd := t.conn.(interface{ Fd() int }).Fd()
 	p := &ping{data: [8]byte{}}
 	// True iff a ping has been sent, and no data has been received since then.
 	outstandingPing := false
@@ -999,7 +1001,7 @@ func (t *http2Client) keepalive() {
 			}
 			if outstandingPing && timeoutLeft <= 0 {
 				t.Close()
-				klog.Infof("KITEX: close in keepalive, line: 994, timestamp: %s", time.Now().String())
+				klog.Infof("KITEX: close in keepalive, fd: %d, line: 994, timestamp: %s", fd, time.Now().String())
 				return
 			}
 			t.mu.Lock()
@@ -1021,9 +1023,9 @@ func (t *http2Client) keepalive() {
 				// we awaken.
 				outstandingPing = false
 				t.kpDormant = true
-				klog.Infof("KITEX: start wait in keepalive, line: 1016, timestamp: %s", time.Now().String())
+				klog.Infof("KITEX: start wait in keepalive, fd: %d, line: 1016, timestamp: %s", fd, time.Now().String())
 				t.kpDormancyCond.Wait()
-				klog.Infof("KITEX: end wait in keepalive, line: 1018, timestamp: %s", time.Now().String())
+				klog.Infof("KITEX: end wait in keepalive, fd: %d, line: 1018, timestamp: %s", fd, time.Now().String())
 			}
 			t.kpDormant = false
 			t.mu.Unlock()
