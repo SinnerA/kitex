@@ -25,6 +25,7 @@ import (
 	"io"
 	"math"
 	"net"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -427,6 +428,13 @@ func (t *http2Client) CloseStream(s *Stream, err error) {
 }
 
 func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.ErrCode, st *status.Status, mdata map[string][]string, eosReceived bool) {
+	_, file2, line2, _ := runtime.Caller(2)
+	_, file3, line3, _ := runtime.Caller(3)
+	_, file4, line4, _ := runtime.Caller(4)
+	_, file5, line5, _ := runtime.Caller(5)
+	fd := s.Conn.(interface{ Fd() int }).Fd()
+	klog.Infof("KITEX: closeStream, Conn[%d], streamID[%d], rstCode[%v], caller-line [2][%s][%d], [3][%s][%d], 4[%s][%d], 5[%s][%d]\n",
+		fd, s.Id, rstCode, file2, line2, file3, line3, file4, line4, file5, line5)
 	// Set stream status to done.
 	if s.swapState(streamDone) == streamDone {
 		// If it was already done, return.  If multiple closeStream calls

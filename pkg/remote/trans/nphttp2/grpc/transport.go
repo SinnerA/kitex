@@ -244,6 +244,20 @@ const (
 	streamDone                  // the entire stream is finished.
 )
 
+var streamStateName = map[streamState]string{
+	streamActive:    "StreamActive",
+	streamWriteDone: "StreamWriteDone",
+	streamReadDone:  "StreamReadDone",
+	streamDone:      "StreamDone",
+}
+
+func (t streamState) String() string {
+	if s, ok := streamStateName[t]; ok {
+		return s
+	}
+	return fmt.Sprintf("UNKNOWN_STEAM_STATE_%d", uint8(t))
+}
+
 // Stream represents an RPC in the transport layer.
 type Stream struct {
 	Id           uint32
