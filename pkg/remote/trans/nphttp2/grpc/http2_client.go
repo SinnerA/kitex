@@ -945,6 +945,7 @@ func (t *http2Client) reader() {
 				return
 			}
 		}
+		klog.Infof("KITEX: before reader handle the frame, fd: %d, streamId: %d, streamType: %s, readlen: %d, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), t.conn.Reader().Len(), time.Now().String())
 		switch frame := frame.(type) {
 		case *http2.MetaHeadersFrame:
 			t.operateHeaders(frame)
