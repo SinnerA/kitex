@@ -899,7 +899,7 @@ func (t *http2Client) reader() {
 		t.Close() // this kicks off resetTransport, so must be last before return
 		return
 	}
-	klog.Infof("KITEX: reader start, fd: %d, streamId: %d, timestamp: %s", fd, frame.Header().StreamID, time.Now().String())
+	klog.Infof("KITEX: reader start, fd: %d, streamId: %d, streamType: %s, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 	t.conn.SetReadDeadline(time.Time{}) // reset deadline once we get the settings frame (we didn't time out, yay!)
 	if t.keepaliveEnabled {
 		atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
@@ -914,15 +914,15 @@ func (t *http2Client) reader() {
 	// loop to keep reading incoming messages on this transport.
 	for {
 		t.controlBuf.throttle()
-		klog.Infof("KITEX: reader ReadFrame start, fd: %d, streamId: %d, timestamp: %s", fd, frame.Header().StreamID, time.Now().String())
+		klog.Infof("KITEX: reader ReadFrame start one loop, fd: %d, streamId: %d, streamType: %s, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 		frame, err := t.framer.ReadFrame()
 		if t.keepaliveEnabled {
 			atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
 		}
 		if err != nil {
-			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, err: %s, timestamp: %s", fd, err.Error(), frame.Header().StreamID, time.Now().String())
+			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, streamType: %s, err: %s, timestamp: %s", fd, err.Error(), frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 		} else {
-			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, timestamp: %s", fd, frame.Header().StreamID, time.Now().String())
+			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, streamType: %s, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 		}
 		if err != nil {
 			// Abort an active stream if the http2.Framer returns a
@@ -963,7 +963,7 @@ func (t *http2Client) reader() {
 		default:
 			klog.Warnf("transport: http2Client.reader got unhandled frame type %v.", frame)
 		}
-		klog.Infof("KITEX: reader handle one loop end, fd: %d, streamId: %d, timestamp: %s", fd, frame.Header().StreamID, time.Now().String())
+		klog.Infof("KITEX: reader handle one loop end, fd: %d, streamId: %d, streamType: %s, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 	}
 }
 
