@@ -43,8 +43,7 @@ func newClientConn(ctx context.Context, tr grpc.ClientTransport, addr string) (*
 	} else {
 		svcName = fmt.Sprintf("%s.%s", ri.Invocation().PackageName(), ri.Invocation().ServiceName())
 	}
-	// FIXME stream never timeout for debug
-	s, err := tr.NewStream(context.Background(), &grpc.CallHdr{
+	s, err := tr.NewStream(ctx, &grpc.CallHdr{
 		Host: ri.To().ServiceName(),
 		// grpc method format /package.Service/Method
 		Method: fmt.Sprintf("/%s/%s", svcName, ri.Invocation().MethodName()),

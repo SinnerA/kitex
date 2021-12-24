@@ -928,7 +928,7 @@ func (t *http2Client) reader() {
 			atomic.StoreInt64(&t.lastRead, time.Now().UnixNano())
 		}
 		if err != nil {
-			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, streamType: %s, err: %s, timestamp: %s", fd, err.Error(), frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
+			klog.Infof("KITEX: reader ReadFrame end, fd: %d, err: %s, timestamp: %s", fd, err.Error(), time.Now().String())
 		} else {
 			klog.Infof("KITEX: reader ReadFrame end, fd: %d, streamId: %d, streamType: %s, timestamp: %s", fd, frame.Header().StreamID, frame.Header().Type.String(), time.Now().String())
 		}
