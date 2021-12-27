@@ -160,10 +160,10 @@ func newHTTP2Server(ctx context.Context, conn netpoll.Connection) (_ ServerTrans
 		bufferPool:        newBufferPool(),
 	}
 	t.controlBuf = newControlBuffer(t.done)
-	// t.bdpEst = &bdpEstimator{
-	// 	bdp:               initialWindowSize,
-	// 	updateFlowControl: t.updateFlowControl,
-	// }
+	//t.bdpEst = &bdpEstimator{
+	//	bdp:               initialWindowSize,
+	//	updateFlowControl: t.updateFlowControl,
+	//}
 
 	t.framer.writer.Flush()
 
