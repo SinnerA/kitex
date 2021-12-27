@@ -28,6 +28,7 @@ import (
 )
 
 const (
+	defaultWindowSizeForDebug = uint32(65535) // FIXME for debug
 	// The default value of flow control window size in HTTP2 spec.
 	defaultWindowSize = uint32(1 << 30) // 1GB
 	// The initial window size for flow control.
