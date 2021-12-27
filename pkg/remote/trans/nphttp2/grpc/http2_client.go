@@ -153,7 +153,7 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, remoteService 
 	//	bdp:               initialWindowSize,
 	//	updateFlowControl: t.updateFlowControl,
 	//}
-	t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst)
+	t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst, defaultWindowSize, defaultWindowSize)
 	t.loopy.conn = conn
 
 	if t.keepaliveEnabled {
