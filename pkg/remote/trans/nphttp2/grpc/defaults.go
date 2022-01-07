@@ -55,3 +55,9 @@ const (
 
 	defaultUserAgent = "kitex/" + kitex.Version
 )
+
+const (
+	// KeepaliveMinPingTime is the minimum ping interval.
+	// This must be 10s by default, but tests may wish to set it lower for convenience.
+	KeepaliveMinPingTime = 10 * time.Second
+)
