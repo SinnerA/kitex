@@ -175,6 +175,7 @@ func (f *inFlow) maybeAdjust(n uint32) uint32 {
 func (f *inFlow) onData(n uint32) error {
 	f.mu.Lock()
 	f.pendingData += n
+	fmt.Printf("=================pendingData [%d], pendingUpdate [%d], limit [%d], delta [%d]\n", f.pendingData, f.pendingUpdate, f.limit, f.delta)
 	if f.pendingData+f.pendingUpdate > f.limit+f.delta {
 		limit := f.limit
 		rcvd := f.pendingData + f.pendingUpdate
