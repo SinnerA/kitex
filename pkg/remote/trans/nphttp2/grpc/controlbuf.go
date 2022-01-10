@@ -821,6 +821,7 @@ func (l *loopyWriter) applySettings(ss []http2.Setting) error {
 // of its data and then puts it at the end of activeStreams if there's still more data
 // to be sent and stream has some stream-level flow control.
 func (l *loopyWriter) processData() (bool, error) {
+	fmt.Printf("===================loopyWriter processData: sendQuota [%d]\n", l.sendQuota)
 	if l.sendQuota == 0 {
 		return true, nil
 	}
