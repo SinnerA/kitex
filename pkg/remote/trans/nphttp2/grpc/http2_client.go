@@ -175,7 +175,7 @@ func newHTTP2Client(ctx context.Context, conn netpoll.Connection, opts ConnectOp
 			updateFlowControl: t.updateFlowControl,
 		}
 	}
-	t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst)
+	t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst, icwz)
 
 	if t.keepaliveEnabled {
 		t.kpDormancyCond = sync.NewCond(&t.mu)
