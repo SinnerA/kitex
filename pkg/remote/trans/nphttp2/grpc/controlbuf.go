@@ -889,6 +889,7 @@ func (l *loopyWriter) processData() (bool, error) {
 	size := hSize + dSize
 
 	// Now that outgoing flow controls are checked we can replenish str's write quota
+	fmt.Printf("==============loopyWriter processData replenish size [%d]\n", size)
 	str.wq.replenish(size)
 	var endStream bool
 	// If this is the last data message on this stream and all of it can be written in this iteration.
