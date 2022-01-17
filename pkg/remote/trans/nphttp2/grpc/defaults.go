@@ -29,9 +29,11 @@ import (
 
 const (
 	// The default value of flow control window size in HTTP2 spec.
-	defaultWindowSize = uint32(512) // 1GB
+	defaultWindowSize = uint32(65535) // 64K
 	// The initial window size for flow control.
-	initialWindowSize = defaultWindowSize // for an RPC
+	// It can be set by client.WithGRPCInitialConnWindowSize or server.WithGRPCInitialConnWindowSize,
+	// for compatibility with lower versions and other frameworks.
+	initialWindowSize = uint32(1 << 30) // 1GB, for an RPC
 	// Infinity means unset duration
 	Infinity                     = time.Duration(math.MaxInt64)
 	defaultMaxStreamsClient      = 100
