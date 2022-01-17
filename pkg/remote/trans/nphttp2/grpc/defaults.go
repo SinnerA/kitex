@@ -29,8 +29,6 @@ import (
 
 const (
 	// The default value of flow control window size in HTTP2 spec.
-	debugSendQuota = uint32(65535) // 64KB
-	// The default value of flow control window size in HTTP2 spec.
 	defaultWindowSize = uint32(1 << 30) // 1GB
 	// The initial window size for flow control.
 	initialWindowSize = defaultWindowSize // for an RPC

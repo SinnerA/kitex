@@ -470,8 +470,8 @@ func newLoopyWriter(s side, fr *framer, cbuf *controlBuffer, bdpEst *bdpEstimato
 	l := &loopyWriter{
 		side:          s,
 		cbuf:          cbuf,
-		sendQuota:     debugSendQuota,
-		oiws:          debugSendQuota,
+		sendQuota:     windowSize,
+		oiws:          windowSize,
 		estdStreams:   make(map[uint32]*outStream),
 		activeStreams: newOutStreamList(),
 		framer:        fr,
