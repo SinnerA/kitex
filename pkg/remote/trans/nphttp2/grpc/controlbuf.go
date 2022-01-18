@@ -470,7 +470,7 @@ func newLoopyWriter(s side, fr *framer, cbuf *controlBuffer, bdpEst *bdpEstimato
 	l := &loopyWriter{
 		side:          s,
 		cbuf:          cbuf,
-		sendQuota:     65535,
+		sendQuota:     windowSize,
 		oiws:          windowSize,
 		estdStreams:   make(map[uint32]*outStream),
 		activeStreams: newOutStreamList(),
@@ -811,6 +811,13 @@ func (l *loopyWriter) applySettings(ss []http2.Setting) error {
 					}
 				}
 			}
+
+			if l.sendQuota > s.Val {
+				println("Get http2.SettingInitialWindowSize [%d], but l.sendQuota [%d], set sendQuota to [%d]", s.Val, l.sendQuota, s.Val)
+				l.sendQuota = s.Val
+			} else {
+				println("Get http2.SettingInitialWindowSize [%d], and l.sendQuota [%d]", s.Val, l.sendQuota)
+			}
 		case http2.SettingHeaderTableSize:
 			updateHeaderTblSize(l.hEnc, s.Val)
 		}
@@ -822,6 +829,7 @@ func (l *loopyWriter) applySettings(ss []http2.Setting) error {
 // of its data and then puts it at the end of activeStreams if there's still more data
 // to be sent and stream has some stream-level flow control.
 func (l *loopyWriter) processData() (bool, error) {
+	println("sendQuota: ", l.sendQuota)
 	if l.sendQuota == 0 {
 		return true, nil
 	}
