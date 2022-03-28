@@ -27,7 +27,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -37,8 +36,9 @@ import (
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/hpack"
+	"github.com/cloudwego/netpoll"
+	"github.com/cloudwego/netpoll-http2"
+	"github.com/cloudwego/netpoll-http2/hpack"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/protobuf/proto"
 )
@@ -608,13 +608,17 @@ type framer struct {
 	writer *bufWriter
 }
 
-func newFramer(conn net.Conn, writeBufferSize, readBufferSize, maxHeaderListSize uint32) *framer {
+func newFramer(conn netpoll.Connection, writeBufferSize, readBufferSize, maxHeaderListSize uint32) *framer {
 	w := newBufWriter(conn, int(writeBufferSize))
 
-	var r io.Reader = conn
+	r := conn.Reader()
 	if readBufferSize > 0 {
-		r = bufio.NewReaderSize(r, int(readBufferSize))
+		r = newBufReader(conn, int(readBufferSize))
 	}
+
+	//if readBufferSize > 0 {
+	//	r = bufio.NewReaderSize(r, int(readBufferSize))
+	//}
 
 	fr := &framer{
 		writer: w,
@@ -629,17 +633,76 @@ func newFramer(conn net.Conn, writeBufferSize, readBufferSize, maxHeaderListSize
 	return fr
 }
 
+type bufReader struct {
+	buf       []byte
+	batchSize int
+	conn      netpoll.Connection
+	reader    netpoll.Reader
+}
+
+func newBufReader(conn netpoll.Connection, batchSize int) *bufReader {
+	return &bufReader{
+		buf:       make([]byte, batchSize*2),
+		batchSize: batchSize,
+		conn:      conn,
+	}
+}
+
+func (b bufReader) Next(n int) (p []byte, err error) {
+	return b.re
+}
+
+func (b bufReader) Peek(n int) (buf []byte, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) Skip(n int) (err error) {
+	panic("implement me")
+}
+
+func (b bufReader) Until(delim byte) (line []byte, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) ReadString(n int) (s string, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) ReadBinary(n int) (p []byte, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) ReadByte() (b byte, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) Slice(n int) (r netpoll.Reader, err error) {
+	panic("implement me")
+}
+
+func (b bufReader) Release() (err error) {
+	panic("implement me")
+}
+
+func (b bufReader) Len() (length int) {
+	panic("implement me")
+}
+
+func (b bufReader) Read(p []byte) (n int, err error) {
+	panic("implement me")
+}
+
 type bufWriter struct {
 	buf       []byte
 	offset    int
 	batchSize int
-	conn      net.Conn
+	conn      netpoll.Connection
 	err       error
 
 	onFlush func()
 }
 
-func newBufWriter(conn net.Conn, batchSize int) *bufWriter {
+func newBufWriter(conn netpoll.Connection, batchSize int) *bufWriter {
 	return &bufWriter{
 		buf:       make([]byte, batchSize*2),
 		batchSize: batchSize,
@@ -679,4 +742,37 @@ func (w *bufWriter) Flush() error {
 	_, w.err = w.conn.Write(w.buf[:w.offset])
 	w.offset = 0
 	return w.err
+}
+
+// Malloc implement the netpoll Writer.
+func (w *bufWriter) Malloc(n int) (buf []byte, err error) {
+	return w.conn.Writer().Malloc(n)
+}
+
+func (w *bufWriter) WriteString(s string) (n int, err error) {
+	return w.conn.Writer().WriteString(s)
+}
+
+func (w *bufWriter) WriteBinary(b []byte) (n int, err error) {
+	return w.conn.Writer().WriteBinary(b)
+}
+
+func (w *bufWriter) WriteByte(b byte) (err error) {
+	return w.conn.Writer().WriteByte(b)
+}
+
+func (w *bufWriter) WriteDirect(p []byte, remainCap int) error {
+	return w.conn.Writer().WriteDirect(p, remainCap)
+}
+
+func (w *bufWriter) MallocAck(n int) (err error) {
+	return w.conn.Writer().MallocAck(n)
+}
+
+func (w *bufWriter) Append(nw netpoll.Writer) (err error) {
+	return w.conn.Writer().Append(nw)
+}
+
+func (w *bufWriter) MallocLen() (length int) {
+	return w.conn.Writer().MallocLen()
 }
