@@ -87,7 +87,7 @@ func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
 }
 
 // GetTCPUserTimeout gets the TCP user timeout on a connection's socket
-func GetTCPUserTimeout(conn netpoll.Connection) (opt int, err error) {
+func GetTCPUserTimeout(conn net.Conn) (opt int, err error) {
 	tcpconn, ok := conn.(*net.TCPConn)
 	if !ok {
 		err = fmt.Errorf("conn is not *net.TCPConn. got %T", conn)

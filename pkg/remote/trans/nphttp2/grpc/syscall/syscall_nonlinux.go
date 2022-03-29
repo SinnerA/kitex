@@ -64,14 +64,14 @@ func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 }
 
 // SetTCPUserTimeout is a no-op function under non-linux environments.
-func SetTCPUserTimeout(conn netpoll.Connection, timeout time.Duration) error {
+func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
 	log()
 	return nil
 }
 
 // GetTCPUserTimeout is a no-op function under non-linux environments.
 // A negative return value indicates the operation is not supported
-func GetTCPUserTimeout(conn netpoll.Connection) (int, error) {
+func GetTCPUserTimeout(conn net.Conn) (int, error) {
 	log()
 	return -1, nil
 }
