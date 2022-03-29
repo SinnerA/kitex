@@ -24,10 +24,9 @@
 package syscall
 
 import (
+	"net"
 	"sync"
 	"time"
-
-	"github.com/cloudwego/netpoll"
 
 	"github.com/cloudwego/kitex/pkg/klog"
 )
