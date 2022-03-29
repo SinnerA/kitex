@@ -66,7 +66,7 @@ func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 }
 
 // SetTCPUserTimeout sets the TCP user timeout on a connection's socket
-func SetTCPUserTimeout(conn netpoll.Connection, timeout time.Duration) error {
+func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
 	tcpconn, ok := conn.(*net.TCPConn)
 	if !ok {
 		// not a TCP connection. exit early
