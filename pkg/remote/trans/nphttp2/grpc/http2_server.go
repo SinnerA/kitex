@@ -39,8 +39,8 @@ import (
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
 	"github.com/cloudwego/netpoll"
-	http2 "golang.org/x/net/http2"
-	"golang.org/x/net/http2/hpack"
+	"github.com/cloudwego/netpoll-http2"
+	"github.com/cloudwego/netpoll-http2/hpack"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -62,7 +62,7 @@ type http2Server struct {
 	lastRead    int64
 	ctx         context.Context
 	done        chan struct{}
-	conn        net.Conn
+	conn        netpoll.Connection
 	loopy       *loopyWriter
 	readerDone  chan struct{} // sync point to enable testing.
 	writerDone  chan struct{} // sync point to enable testing.
@@ -113,7 +113,7 @@ type http2Server struct {
 
 // newHTTP2Server constructs a ServerTransport based on HTTP2. ConnectionError is
 // returned if something goes wrong.
-func newHTTP2Server(ctx context.Context, conn net.Conn, config *ServerConfig) (_ ServerTransport, err error) {
+func newHTTP2Server(ctx context.Context, conn netpoll.Connection, config *ServerConfig) (_ ServerTransport, err error) {
 	maxHeaderListSize := defaultServerMaxHeaderListSize
 	if config.MaxHeaderListSize != nil {
 		maxHeaderListSize = *config.MaxHeaderListSize

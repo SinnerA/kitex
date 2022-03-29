@@ -21,11 +21,9 @@
 package grpc
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"strconv"
@@ -613,12 +611,11 @@ func newFramer(conn netpoll.Connection, writeBufferSize, readBufferSize, maxHead
 
 	r := conn.Reader()
 	if readBufferSize > 0 {
-		r = newBufReader(conn, int(readBufferSize))
-	}
+		// FIXME
+		// r = bufio.NewReaderSize(conn, int(readBufferSize))
 
-	//if readBufferSize > 0 {
-	//	r = bufio.NewReaderSize(r, int(readBufferSize))
-	//}
+		// r = newBufReader(conn, int(readBufferSize))
+	}
 
 	fr := &framer{
 		writer: w,
@@ -645,51 +642,52 @@ func newBufReader(conn netpoll.Connection, batchSize int) *bufReader {
 		buf:       make([]byte, batchSize*2),
 		batchSize: batchSize,
 		conn:      conn,
+		reader:    conn.Reader(),
 	}
 }
 
-func (b bufReader) Next(n int) (p []byte, err error) {
-	return b.re
+func (r bufReader) Next(n int) (p []byte, err error) {
+	return r.reader.Next(n)
 }
 
-func (b bufReader) Peek(n int) (buf []byte, err error) {
-	panic("implement me")
+func (r bufReader) Peek(n int) (buf []byte, err error) {
+	return r.reader.Peek(n)
 }
 
-func (b bufReader) Skip(n int) (err error) {
-	panic("implement me")
+func (r bufReader) Skip(n int) (err error) {
+	return r.reader.Skip(n)
 }
 
-func (b bufReader) Until(delim byte) (line []byte, err error) {
-	panic("implement me")
+func (r bufReader) Until(delim byte) (line []byte, err error) {
+	return r.reader.Until(delim)
 }
 
-func (b bufReader) ReadString(n int) (s string, err error) {
-	panic("implement me")
+func (r bufReader) ReadString(n int) (s string, err error) {
+	return r.reader.ReadString(n)
 }
 
-func (b bufReader) ReadBinary(n int) (p []byte, err error) {
-	panic("implement me")
+func (r bufReader) ReadBinary(n int) (p []byte, err error) {
+	return r.reader.ReadBinary(n)
 }
 
-func (b bufReader) ReadByte() (b byte, err error) {
-	panic("implement me")
+func (r bufReader) ReadByte() (b byte, err error) {
+	return r.reader.ReadByte()
 }
 
 func (b bufReader) Slice(n int) (r netpoll.Reader, err error) {
-	panic("implement me")
+	return b.reader.Slice(n)
 }
 
-func (b bufReader) Release() (err error) {
-	panic("implement me")
+func (r bufReader) Release() (err error) {
+	return r.reader.Release()
 }
 
-func (b bufReader) Len() (length int) {
-	panic("implement me")
+func (r bufReader) Len() (length int) {
+	return r.reader.Len()
 }
 
-func (b bufReader) Read(p []byte) (n int, err error) {
-	panic("implement me")
+func (r bufReader) Read(p []byte) (n int, err error) {
+	return r.conn.Read(p)
 }
 
 type bufWriter struct {

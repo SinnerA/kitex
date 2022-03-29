@@ -24,9 +24,10 @@
 package syscall
 
 import (
-	"net"
 	"sync"
 	"time"
+
+	"github.com/cloudwego/netpoll"
 
 	"github.com/cloudwego/kitex/pkg/klog"
 )
@@ -57,20 +58,20 @@ func GetRusage() *Rusage {
 
 // CPUTimeDiff returns the differences of user CPU time and system CPU time used
 // between two Rusage structs. It a no-op function for non-linux environments.
-func CPUTimeDiff(first *Rusage, latest *Rusage) (float64, float64) {
+func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 	log()
 	return 0, 0
 }
 
 // SetTCPUserTimeout is a no-op function under non-linux environments.
-func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
+func SetTCPUserTimeout(conn netpoll.Connection, timeout time.Duration) error {
 	log()
 	return nil
 }
 
 // GetTCPUserTimeout is a no-op function under non-linux environments.
 // A negative return value indicates the operation is not supported
-func GetTCPUserTimeout(conn net.Conn) (int, error) {
+func GetTCPUserTimeout(conn netpoll.Connection) (int, error) {
 	log()
 	return -1, nil
 }

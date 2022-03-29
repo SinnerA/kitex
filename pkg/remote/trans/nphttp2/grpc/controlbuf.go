@@ -28,8 +28,8 @@ import (
 	"sync/atomic"
 
 	"github.com/cloudwego/kitex/pkg/klog"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/hpack"
+	"github.com/cloudwego/netpoll-http2"
+	"github.com/cloudwego/netpoll-http2/hpack"
 )
 
 var updateHeaderTblSize = func(e *hpack.Encoder, v uint32) {

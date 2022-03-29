@@ -51,7 +51,7 @@ func GetRusage() *Rusage {
 
 // CPUTimeDiff returns the differences of user CPU time and system CPU time used
 // between two Rusage structs.
-func CPUTimeDiff(first *Rusage, latest *Rusage) (float64, float64) {
+func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 	var (
 		utimeDiffs  = latest.Utime.Sec - first.Utime.Sec
 		utimeDiffus = latest.Utime.Usec - first.Utime.Usec
@@ -66,7 +66,7 @@ func CPUTimeDiff(first *Rusage, latest *Rusage) (float64, float64) {
 }
 
 // SetTCPUserTimeout sets the TCP user timeout on a connection's socket
-func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
+func SetTCPUserTimeout(conn netpoll.Connection, timeout time.Duration) error {
 	tcpconn, ok := conn.(*net.TCPConn)
 	if !ok {
 		// not a TCP connection. exit early
@@ -87,7 +87,7 @@ func SetTCPUserTimeout(conn net.Conn, timeout time.Duration) error {
 }
 
 // GetTCPUserTimeout gets the TCP user timeout on a connection's socket
-func GetTCPUserTimeout(conn net.Conn) (opt int, err error) {
+func GetTCPUserTimeout(conn netpoll.Connection) (opt int, err error) {
 	tcpconn, ok := conn.(*net.TCPConn)
 	if !ok {
 		err = fmt.Errorf("conn is not *net.TCPConn. got %T", conn)
