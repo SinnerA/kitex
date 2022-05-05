@@ -51,7 +51,7 @@ func GetRusage() *Rusage {
 
 // CPUTimeDiff returns the differences of user CPU time and system CPU time used
 // between two Rusage structs.
-func CPUTimeDiff(first *Rusage, latest *Rusage) (float64, float64) {
+func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 	var (
 		utimeDiffs  = latest.Utime.Sec - first.Utime.Sec
 		utimeDiffus = latest.Utime.Usec - first.Utime.Usec

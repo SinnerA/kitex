@@ -22,11 +22,9 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math"
 	"net"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"

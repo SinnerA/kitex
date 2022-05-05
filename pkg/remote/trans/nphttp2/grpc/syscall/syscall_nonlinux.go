@@ -57,7 +57,7 @@ func GetRusage() *Rusage {
 
 // CPUTimeDiff returns the differences of user CPU time and system CPU time used
 // between two Rusage structs. It a no-op function for non-linux environments.
-func CPUTimeDiff(first *Rusage, latest *Rusage) (float64, float64) {
+func CPUTimeDiff(first, latest *Rusage) (float64, float64) {
 	log()
 	return 0, 0
 }
