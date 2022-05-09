@@ -22,7 +22,10 @@ import (
 	"context"
 	"net"
 
+	"github.com/cloudwego/kitex/pkg/klog"
+
 	"github.com/cloudwego/netpoll"
+	"github.com/luci/go-render/render"
 
 	"github.com/cloudwego/kitex/pkg/endpoint"
 	"github.com/cloudwego/kitex/pkg/remote"
@@ -138,8 +141,11 @@ func (t *svrTransHandler) SetPipeline(pipeline *remote.TransPipeline) {
 }
 
 func (t *svrTransHandler) SetInvokeHandleFunc(inkHdlFunc endpoint.Endpoint) {
-	if t, ok := t.http2.(remote.InvokeHandleFuncSetter); ok {
-		t.SetInvokeHandleFunc(inkHdlFunc)
+	if s, ok := t.http2.(remote.InvokeHandleFuncSetter); ok {
+		klog.Warnf("[Debug] http2 SetInvokeHandleFunc succeed, inkHdlFunc=%+v", render.Render(inkHdlFunc))
+		s.SetInvokeHandleFunc(inkHdlFunc)
+	} else {
+		klog.Warnf("[Debug] http2 SetInvokeHandleFunc failed, t.http2=%+v", render.Render(t.http2))
 	}
 	if t, ok := t.netpoll.(remote.InvokeHandleFuncSetter); ok {
 		t.SetInvokeHandleFunc(inkHdlFunc)

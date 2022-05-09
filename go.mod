@@ -9,6 +9,7 @@ require (
 	github.com/cloudwego/netpoll v0.2.2
 	github.com/cloudwego/thriftgo v0.1.2
 	github.com/json-iterator/go v1.1.12
+	github.com/luci/go-render v0.0.0-20160219211803-9a04cc21af0f
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/gjson v1.9.3
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
