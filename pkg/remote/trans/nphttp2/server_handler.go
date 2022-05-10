@@ -23,6 +23,8 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/luci/go-render/render"
+
 	"github.com/cloudwego/netpoll"
 
 	"github.com/cloudwego/kitex/pkg/endpoint"
@@ -152,6 +154,7 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 			}
 
 			st := NewStream(ctx, t.svcInfo, newServerConn(tr, s), t)
+			klog.Warnf("[Debug] Before call inkHdlFunc, t.inkHdlFunc=%+v, st=%+v", render.Render(t.inkHdlFunc), render.Render(st))
 			if err := t.inkHdlFunc(ctx, &streaming.Args{Stream: st}, nil); err != nil {
 				tr.WriteStatus(s, convertFromKitexToGrpc(err))
 				return
