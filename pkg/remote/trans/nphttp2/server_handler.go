@@ -98,6 +98,7 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 
 	tr.HandleStreams(func(s *grpcTransport.Stream) {
 		gofunc.GoFunc(ctx, func() {
+			fmt.Printf("[Debug] Before call inkHdlFunc, t.inkHdlFunc=%+v\n", render.Render(t.inkHdlFunc))
 			ri, ctx := t.opt.InitRPCInfoFunc(s.Context(), tr.RemoteAddr())
 			// set grpc transport flag before execute metahandler
 			rpcinfo.AsMutableRPCConfig(ri.Config()).SetTransportProtocol(transport.GRPC)
@@ -114,8 +115,10 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 				panicErr := recover()
 				if panicErr != nil {
 					if conn != nil {
+						fmt.Printf("KITEX: panic happened, close conn, remoteAddress=%s, error=%s\nstack=%s", conn.RemoteAddr(), panicErr, string(debug.Stack()))
 						klog.CtxErrorf(ctx, "KITEX: panic happened, close conn, remoteAddress=%s, error=%s\nstack=%s", conn.RemoteAddr(), panicErr, string(debug.Stack()))
 					} else {
+						fmt.Printf("KITEX: panic happened, error=%v\nstack=%s", panicErr, string(debug.Stack()))
 						klog.CtxErrorf(ctx, "KITEX: panic happened, error=%v\nstack=%s", panicErr, string(debug.Stack()))
 					}
 				}
@@ -154,7 +157,6 @@ func (t *svrTransHandler) OnRead(ctx context.Context, conn net.Conn) error {
 			}
 
 			st := NewStream(ctx, t.svcInfo, newServerConn(tr, s), t)
-			klog.Warnf("[Debug] Before call inkHdlFunc, t.inkHdlFunc=%+v, st=%+v", render.Render(t.inkHdlFunc), render.Render(st))
 			if err := t.inkHdlFunc(ctx, &streaming.Args{Stream: st}, nil); err != nil {
 				tr.WriteStatus(s, convertFromKitexToGrpc(err))
 				return
