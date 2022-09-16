@@ -33,6 +33,9 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/cloudwego/kitex/pkg/klog"
+	"golang.org/x/net/http2"
+
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/codes"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/metadata"
 	"github.com/cloudwego/kitex/pkg/remote/trans/nphttp2/status"
@@ -67,7 +70,8 @@ type recvMsg struct {
 	// nil: received some data
 	// io.EOF: stream is completed. data is nil.
 	// other non-nil error: transport failure. data is nil.
-	err error
+	err     error
+	rstCode http2.ErrCode // FIXME
 }
 
 // recvBuffer is an unbounded channel of recvMsg structs.
@@ -207,6 +211,9 @@ func (r *recvBufferReader) readClient(p []byte) (n int, err error) {
 func (r *recvBufferReader) readAdditional(m recvMsg, p []byte) (n int, err error) {
 	r.recv.load()
 	if m.err != nil {
+		if m.err == io.EOF {
+			klog.Warnf("KITEX DEBUG: recvBufferReader readAdditional, rstCode[%d]\n", m.rstCode)
+		}
 		return 0, m.err
 	}
 	copied, _ := m.buffer.Read(p)

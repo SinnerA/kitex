@@ -25,6 +25,7 @@ import (
 	"io"
 	"math"
 	"net"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -483,8 +484,17 @@ func (t *http2Client) closeStream(s *Stream, err error, rst bool, rstCode http2.
 		s.trailer = mdata
 	}
 	if err != nil {
+		_, file2, line2, _ := runtime.Caller(2)
+		_, file3, line3, _ := runtime.Caller(3)
+		_, file4, line4, _ := runtime.Caller(4)
+		_, file5, line5, _ := runtime.Caller(5)
+		_, file6, line6, _ := runtime.Caller(6)
+
+		klog.Warnf("KITEX DEBUG: http2Client closeStream, err[%v], rstCode[%d], caller-line [2][%s][%d], [3][%s][%d], 4[%s][%d], 5[%s][%d], 6[%s][%d]\n",
+			err, rstCode, file2, line2, file3, line3, file4, line4, file5, line5, file6, line6)
+
 		// This will unblock reads eventually.
-		s.write(recvMsg{err: err})
+		s.write(recvMsg{err: err, rstCode: rstCode})
 	}
 	// If headerChan isn't closed, then close it.
 	if atomic.CompareAndSwapUint32(&s.headerChanClosed, 0, 1) {
